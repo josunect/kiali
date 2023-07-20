@@ -42,7 +42,8 @@ describe('SummaryPanelNodeComponent', () => {
       trafficRates: [],
       gateways: null,
       peerAuthentications: null,
-      serviceDetails: null
+      serviceDetails: null,
+      theme: ''
     };
   });
 
