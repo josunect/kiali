@@ -17,6 +17,7 @@ import { GlobalActions } from '../../../actions/GlobalActions';
 
 type UserProps = {
   session?: LoginSession;
+  theme: string;
   logout: () => void;
   extendSession: (session: LoginSession) => void;
 };
@@ -28,7 +29,6 @@ type UserState = {
   timeLeftTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
-  theme: string;
 };
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
@@ -38,8 +38,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
-      isDropdownOpen: false,
-      theme: Theme.Light
+      isDropdownOpen: false
     };
   }
   componentDidMount() {
@@ -98,14 +97,14 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.state.theme === Theme.Light) {
-      this.setState({ theme: Theme.Dark });
+    if (this.props.theme === Theme.Light) {
       document.documentElement.classList.add('pf-theme-dark');
       store.dispatch(GlobalActions.setTheme(Theme.Dark));
+      localStorage.setItem('kiali-theme', Theme.Dark);
     } else {
-      this.setState({ theme: Theme.Light });
       document.documentElement.classList.remove('pf-theme-dark');
       store.dispatch(GlobalActions.setTheme(Theme.Light));
+      localStorage.setItem('kiali-theme', Theme.Light);
     }
   };
 
@@ -140,7 +139,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.state.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
+          {this.props.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
         </DropdownItem>
       </>
     );
@@ -182,7 +181,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  session: state.authentication.session
+  session: state.authentication.session,
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
