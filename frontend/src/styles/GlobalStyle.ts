@@ -9,10 +9,6 @@ export const globalStyle = kialiStyle({
   fontSize: '14px',
   overflow: 'hidden',
   $nest: {
-    '&.kiali-theme-dark': {
-      color: '#fff'
-    },
-
     /**
      * Kiosk mode
      */

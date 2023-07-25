@@ -31,12 +31,12 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
-import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
-import { themes } from '../../types/Common';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -108,15 +108,15 @@ const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 
-export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: summaryPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: summaryPanelWidth
-  };
+const panelStyle = kialiStyle({
+  height: '100%',
+  margin: 0,
+  minWidth: summaryPanelWidth,
+  overflowY: 'auto' as 'auto',
+  width: summaryPanelWidth
+});
 
+export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
   private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private validationPromise?: CancelablePromise<Response<ValidationStatus>>;
@@ -186,14 +186,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
 
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div className="panel panel-default" style={{ ...SummaryPanelNamespaceBox.panelStyle, ...bgStyle }}>
-        <div className="panel-heading" style={bgStyle}>
+      <div className={classes('panel', 'panel-default', panelStyle, bgStyle)}>
+        <div className={classes('panel-heading', bgStyle)}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />
@@ -219,8 +216,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               entryDelay={1250}
               reference={tooltipTotalRef}
             />
-            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+              <div className={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
@@ -251,8 +248,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+              <div className={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
@@ -283,8 +280,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+              <div className={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.

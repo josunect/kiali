@@ -36,9 +36,9 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
-import { PFColors } from '../../components/Pf/PfColors';
-import { themes } from '../../types/Common';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type SummaryPanelGraphMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -113,15 +113,15 @@ const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 
-export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: summaryPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: summaryPanelWidth
-  };
+const panelStyle = kialiStyle({
+  height: '100%',
+  margin: 0,
+  minWidth: summaryPanelWidth,
+  overflowY: 'auto' as 'auto',
+  width: summaryPanelWidth
+});
 
+export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
   private graphTraffic?: SummaryPanelGraphTraffic;
   private isPF: boolean = false;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
@@ -220,18 +220,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
-    const summaryHeaderStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div
-        id="summary-panel-graph"
-        className="panel panel-default"
-        style={{ ...summaryHeaderStyle, ...SummaryPanelGraph.panelStyle }}
-      >
-        <div id="summary-panel-graph-heading" className="panel-heading" style={summaryHeaderStyle}>
+      <div id="summary-panel-graph" className={classes('panel', 'panel-default', bgStyle, panelStyle)}>
+        <div id="summary-panel-graph-heading" className={classes('panel-heading', bgStyle)}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />
@@ -257,8 +251,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               entryDelay={1250}
               reference={tooltipTotalRef}
             />
-            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+              <div className={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
@@ -289,8 +283,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+              <div className={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
@@ -321,8 +315,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
-              <div style={summaryFont}>
+            <Tab className={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+              <div className={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.

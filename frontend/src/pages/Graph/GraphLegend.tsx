@@ -5,6 +5,7 @@ import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
 import { PFColors } from 'components/Pf/PfColors';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
+import { classes } from 'typestyle';
 
 export interface GraphLegendProps {
   closeLegend: () => void;
@@ -40,7 +41,7 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
     });
 
     return (
-      <div className={legendBoxStyle} style={summaryFont} data-test="graph-legend">
+      <div className={classes(legendBoxStyle, summaryFont)} data-test="graph-legend">
         <div className={`${headerStyle} ${summaryTitle}`}>
           <span>Legend</span>
           <span className={closeBoxStyle}>

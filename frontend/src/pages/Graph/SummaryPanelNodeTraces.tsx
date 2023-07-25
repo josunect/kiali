@@ -189,7 +189,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
           </SimpleList>
         )}
         <Button
-          style={summaryFont}
+          className={summaryFont}
           onClick={() => {
             if (isParentKiosk(this.props.kiosk)) {
               kioskContextMenuAction(tracesDetailsURL);

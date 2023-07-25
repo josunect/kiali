@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
-import { MILLISECONDS } from '../../../types/Common';
+import { MILLISECONDS, Theme } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -14,10 +14,6 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { GlobalActions } from '../../../actions/GlobalActions';
-
-const darkmode = 'pf-theme-dark';
-const darkmodeKiali = 'kiali-theme-dark';
-const themes = ['Default', 'Dark'];
 
 type UserProps = {
   session?: LoginSession;
@@ -43,7 +39,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
       isDropdownOpen: false,
-      theme: themes[0]
+      theme: Theme.Light
     };
   }
   componentDidMount() {
@@ -102,16 +98,14 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.state.theme === themes[0]) {
-      this.setState({ theme: themes[1] });
-      document.documentElement.classList.add(darkmode);
-      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
-      store.dispatch(GlobalActions.setTheme(themes[1]));
+    if (this.state.theme === Theme.Light) {
+      this.setState({ theme: Theme.Dark });
+      document.documentElement.classList.add('pf-theme-dark');
+      store.dispatch(GlobalActions.setTheme(Theme.Dark));
     } else {
-      this.setState({ theme: themes[0] });
-      document.documentElement.classList.remove(darkmode);
-      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
-      store.dispatch(GlobalActions.setTheme(themes[0]));
+      this.setState({ theme: Theme.Light });
+      document.documentElement.classList.remove('pf-theme-dark');
+      store.dispatch(GlobalActions.setTheme(Theme.Light));
     }
   };
 
@@ -146,7 +140,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.state.theme === themes[0] ? themes[1] : themes[0]} theme
+          {this.state.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
         </DropdownItem>
       </>
     );

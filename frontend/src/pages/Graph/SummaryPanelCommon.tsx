@@ -21,10 +21,6 @@ export const summaryBodyTabs = kialiStyle({
   padding: '10px 15px 0 15px'
 });
 
-export const summaryHeader: React.CSSProperties = {
-  backgroundColor: PFColors.White
-};
-
 export const summaryPanelWidth = '25em';
 
 export const summaryPanel = kialiStyle({
@@ -39,9 +35,9 @@ export const summaryPanel = kialiStyle({
   width: summaryPanelWidth
 });
 
-export const summaryFont: React.CSSProperties = {
+export const summaryFont = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)'
-};
+});
 
 export const summaryTitle = kialiStyle({
   fontWeight: 'bolder',
