@@ -1,11 +1,11 @@
 import { PFColors } from 'components/Pf/PfColors';
-import { Theme } from 'types/Common';
+import { PF_THEME_DARK, Theme } from 'types/Common';
 import { cssRule } from 'typestyle';
 import { globalStyle } from './GlobalStyle';
 import { kialiStyle } from './StyleUtils';
 
 // Apply global dark theme styles
-cssRule(`:where(.pf-theme-dark) .${globalStyle}`, {
+cssRule(`:where(.${PF_THEME_DARK}) .${globalStyle}`, {
   color: '#fff'
 });
 
@@ -26,8 +26,8 @@ export const bgDarkSoft = kialiStyle({
 });
 
 export const getGraphBackgroundStyle = (theme: string) => {
-  return kialiStyle({
+  return {
     backgroundColor: theme === Theme.Dark ? PFColors.Black700 : PFColors.White,
     color: theme === Theme.Dark ? PFColors.White : PFColors.Black700
-  });
+  };
 };

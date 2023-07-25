@@ -108,15 +108,15 @@ const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 
-const panelStyle = kialiStyle({
-  height: '100%',
-  margin: 0,
-  minWidth: summaryPanelWidth,
-  overflowY: 'auto' as 'auto',
-  width: summaryPanelWidth
-});
-
 export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
+  static readonly panelStyle = {
+    height: '100%',
+    margin: 0,
+    minWidth: summaryPanelWidth,
+    overflowY: 'auto' as 'auto',
+    width: summaryPanelWidth
+  };
+
   private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private validationPromise?: CancelablePromise<Response<ValidationStatus>>;
@@ -189,8 +189,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div className={classes('panel', 'panel-default', panelStyle, bgStyle)}>
-        <div className={classes('panel-heading', bgStyle)}>
+      <div className={classes('panel', 'panel-default')} style={{ ...SummaryPanelNamespaceBox.panelStyle, ...bgStyle }}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />
@@ -216,8 +216,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               entryDelay={1250}
               reference={tooltipTotalRef}
             />
-            <Tab className={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+              <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
@@ -248,8 +248,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+              <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
@@ -280,8 +280,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+              <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.

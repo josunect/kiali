@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
-import { MILLISECONDS, Theme } from '../../../types/Common';
+import { KIALI_THEME, MILLISECONDS, PF_THEME_DARK, Theme } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -98,13 +98,13 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
   handleTheme = () => {
     if (this.props.theme === Theme.Light) {
-      document.documentElement.classList.add('pf-theme-dark');
+      document.documentElement.classList.add(PF_THEME_DARK);
       store.dispatch(GlobalActions.setTheme(Theme.Dark));
-      localStorage.setItem('kiali-theme', Theme.Dark);
+      localStorage.setItem(KIALI_THEME, Theme.Dark);
     } else {
-      document.documentElement.classList.remove('pf-theme-dark');
+      document.documentElement.classList.remove(PF_THEME_DARK);
       store.dispatch(GlobalActions.setTheme(Theme.Light));
-      localStorage.setItem('kiali-theme', Theme.Light);
+      localStorage.setItem(KIALI_THEME, Theme.Light);
     }
   };
 

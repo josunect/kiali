@@ -113,15 +113,15 @@ const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 
-const panelStyle = kialiStyle({
-  height: '100%',
-  margin: 0,
-  minWidth: summaryPanelWidth,
-  overflowY: 'auto' as 'auto',
-  width: summaryPanelWidth
-});
-
 export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
+  static readonly panelStyle = {
+    height: '100%',
+    margin: 0,
+    minWidth: summaryPanelWidth,
+    overflowY: 'auto' as 'auto',
+    width: summaryPanelWidth
+  };
+
   private graphTraffic?: SummaryPanelGraphTraffic;
   private isPF: boolean = false;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
@@ -224,8 +224,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div id="summary-panel-graph" className={classes('panel', 'panel-default', bgStyle, panelStyle)}>
-        <div id="summary-panel-graph-heading" className={classes('panel-heading', bgStyle)}>
+      <div
+        id="summary-panel-graph"
+        className={classes('panel', 'panel-default')}
+        style={{ ...SummaryPanelGraph.panelStyle, ...bgStyle }}
+      >
+        <div id="summary-panel-graph-heading" className={'panel-heading'} style={bgStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />
@@ -251,8 +255,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               entryDelay={1250}
               reference={tooltipTotalRef}
             />
-            <Tab className={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+              <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
@@ -283,8 +287,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+              <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
@@ -315,8 +319,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+              <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.

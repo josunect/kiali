@@ -16,7 +16,6 @@ import {
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
-import { classes } from 'typestyle';
 import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
 
 type SummaryPanelClusterBoxState = {
@@ -94,7 +93,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
     return (
       <div className="panel panel-default" style={SummaryPanelClusterBox.panelStyle}>
-        <div className={classes('panel-heading', bgStyle)}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle('Cluster')}
           {this.renderCluster(cluster)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
@@ -119,8 +118,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
               entryDelay={1250}
               reference={tooltipTotalRef}
             />
-            <Tab className={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+              <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
@@ -151,8 +150,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+              <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
@@ -183,8 +182,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 }
               </div>
             </Tab>
-            <Tab className={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
-              <div className={summaryFont}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+              <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.

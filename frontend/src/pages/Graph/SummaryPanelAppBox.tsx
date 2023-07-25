@@ -169,8 +169,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel, bgStyle)}>
-        <div className={classes('panel-heading', bgStyle)}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle('Application')}
           <span>
             <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />

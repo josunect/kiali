@@ -175,8 +175,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel, bgStyle)}>
-        <div className={classes('panel-heading', bgStyle)}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle(nodeType)}
           <div>
             <span>
@@ -298,12 +298,12 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return (
       <div className={summaryBodyTabs}>
         <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-          <Tab className={summaryFont} title="Traffic" eventKey={0}>
-            <div className={summaryFont}>
+          <Tab style={summaryFont} title="Traffic" eventKey={0}>
+            <div style={summaryFont}>
               <SummaryPanelNodeTraffic {...this.props} />
             </div>
           </Tab>
-          <Tab className={summaryFont} title="Traces" eventKey={1}>
+          <Tab style={summaryFont} title="Traces" eventKey={1}>
             <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime - this.props.duration} />
           </Tab>
         </SimpleTabs>

@@ -146,7 +146,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
     const SecurityBlock = () => {
       return (
-        <div className={classes('panel-heading', bgStyle)}>
+        <div className={'panel-heading'} style={bgStyle}>
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
           {hasPrincipals && (
             <>
@@ -166,8 +166,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     };
 
     return (
-      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel, bgStyle)}>
-        <div className={classes('panel-heading', bgStyle)}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle(`Edge (${prettyProtocol(protocol)})`)}
           {renderBadgedLink(sourceData, undefined, 'From:  ')}
           {renderBadgedLink(destData, undefined, 'To:        ')}
@@ -176,8 +176,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         {(isHttp || isGrpc) && (
           <div className={summaryBodyTabs}>
             <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-              <Tab className={summaryFont} title="Traffic" eventKey={0}>
-                <div className={summaryFont}>
+              <Tab style={summaryFont} title="Traffic" eventKey={0}>
+                <div style={summaryFont}>
                   {isGrpc && (
                     <>
                       <RateTableGrpc
@@ -203,8 +203,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                 </div>
               </Tab>
               {isRequests && (
-                <Tab className={summaryFont} title="Flags" eventKey={1}>
-                  <div className={summaryFont}>
+                <Tab style={summaryFont} title="Flags" eventKey={1}>
+                  <div style={summaryFont}>
                     <ResponseFlagsTable
                       title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
                       responses={edgeData.responses}
@@ -212,8 +212,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   </div>
                 </Tab>
               )}
-              <Tab className={summaryFont} title="Hosts" eventKey={2}>
-                <div className={summaryFont}>
+              <Tab style={summaryFont} title="Hosts" eventKey={2}>
+                <div style={summaryFont}>
                   <ResponseHostsTable
                     title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
                     responses={edgeData.responses}
@@ -228,13 +228,13 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         {isTcp && (
           <div className={summaryBodyTabs}>
             <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-              <Tab className={summaryFont} eventKey={0} title="Flags">
-                <div className={summaryFont}>
+              <Tab style={summaryFont} eventKey={0} title="Flags">
+                <div style={summaryFont}>
                   <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
                 </div>
               </Tab>
-              <Tab className={summaryFont} eventKey={1} title="Hosts">
-                <div className={summaryFont}>
+              <Tab style={summaryFont} eventKey={1} title="Hosts">
+                <div style={summaryFont}>
                   <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
                 </div>
               </Tab>

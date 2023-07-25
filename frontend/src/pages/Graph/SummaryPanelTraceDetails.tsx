@@ -304,14 +304,14 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             }}
             isInline
           >
-            <span className={summaryFont}>{text}</span>
+            <span style={summaryFont}>{text}</span>
           </Button>{' '}
           <Button
             variant={ButtonVariant.link}
             onClick={() => new FocusAnimation(cy).start(cy.elements(selector))}
             isInline
           >
-            <span className={summaryFont}>
+            <span style={summaryFont}>
               <MapMarkerIcon />
             </span>
           </Button>
@@ -367,10 +367,10 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             }}
             isInline
           >
-            <span className={summaryFont}>{text}</span>
+            <span style={summaryFont}>{text}</span>
           </Button>{' '}
           <Button variant={ButtonVariant.link} onClick={() => this.props.onFocus!({ id: node[0].getId() })} isInline>
-            <span className={summaryFont}>
+            <span style={summaryFont}>
               <MapMarkerIcon />
             </span>
           </Button>
