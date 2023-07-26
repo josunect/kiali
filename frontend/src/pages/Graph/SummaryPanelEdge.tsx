@@ -38,7 +38,6 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
-import { PFColors } from '../../components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 

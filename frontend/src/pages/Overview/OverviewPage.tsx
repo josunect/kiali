@@ -914,7 +914,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         />
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll
+<<<<<<< HEAD
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
+=======
+            className={
+              this.state.displayMode === OverviewDisplayMode.LIST
+                ? gridStyleList(this.props.theme)
+                : gridStyleCompact(this.props.theme)
+            }
+>>>>>>> 95c12bfb5 (Refactor dark theme changes (#8))
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList
