@@ -64,6 +64,10 @@ const contextMenuItemLink = kialiStyle({
   color: PFColors.Black900
 });
 
+const hrStyle = kialiStyle({
+  margin: '8px 0 5px 0'
+});
+
 type Props = NodeContextMenuProps & ReduxProps;
 type LinkParams = { namespace: string; type: string; name: string; cluster?: string };
 
@@ -271,7 +275,7 @@ export function NodeContextMenuComponent(props: Props) {
     if (isServiceDetailsLoading) {
       return (
         <>
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           <div className={contextMenuSubTitle}>Actions</div>
           <div className={contextMenuItem}>
             <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
@@ -283,10 +287,10 @@ export function NodeContextMenuComponent(props: Props) {
     if (serviceDetails) {
       return (
         <>
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           <div className={contextMenuSubTitle}>{updateLabel === '' ? 'Create' : 'Update'}</div>
           {SERVICE_WIZARD_ACTIONS.map(eventKey => renderWizardActionItem(eventKey))}
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           {renderDeleteTrafficRoutingItem()}
         </>
       );
@@ -312,7 +316,7 @@ export function NodeContextMenuComponent(props: Props) {
     return (
       <div className={contextMenu} data-test="graph-node-context-menu">
         {renderHeader()}
-        <hr style={{ margin: '8px 0 5px 0' }} />
+        <hr className={hrStyle} />
         {menuOptions}
         {renderWizardsItems()}
       </div>

@@ -1,3 +1,4 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -31,6 +32,11 @@ export const globalStyle = kialiStyle({
 
     img: {
       verticalAlign: 'middle'
+    },
+
+    hr: {
+      border: 0,
+      borderTop: `1px solid ${PFColors.BorderColor100}`
     },
 
     'input[type=checkbox], input[type=radio]': {
@@ -100,7 +106,7 @@ export const globalStyle = kialiStyle({
     /**
      * Health SVG visible
      */
-    // eslint-disable-next-line
+    // eslint-disable-next-line no-multi-str
     'svg:not(:root).icon-failure, \
      svg:not(:root).icon-degraded, \
      svg:not(:root).icon-healthy, \
@@ -119,64 +125,6 @@ export const globalStyle = kialiStyle({
 
     '.pf-c-chart svg': {
       overflow: 'visible !important'
-    },
-
-    /* Table CSS styles extracted from bootstrap library (v3.4.1) */
-    '.table': {
-      width: '100%',
-      maxWidth: '100%',
-      $nest: {
-        // eslint-disable-next-line
-        '& > tbody > tr > td, \
-        & > tbody > tr > th, \
-        & > tfoot > tr > td, \
-        & > tfoot > tr > th, \
-        & > thead > tr > td, \
-        & > thead > tr > th': {
-          padding: '10px',
-          lineHeight: 1.66667,
-          verticalAlign: 'top',
-          borderTop: '1px solid #d1d1d1'
-        },
-
-        '& > thead > tr > th': {
-          verticalAlign: 'bottom',
-          borderBottom: '2px solid #d1d1d1'
-        },
-
-        // eslint-disable-next-line
-        '& > thead:first-child > tr:first-child > td, \
-        & > thead:first-child > tr:first-child > th': {
-          borderTop: 0
-        }
-      }
-    },
-
-    /* Panel graph CSS styles extracted from bootstrap library (v3.4.1) */
-    '.panel': {
-      marginBottom: '23px',
-      border: '1px solid transparent',
-      borderRadius: '1px',
-      '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
-      boxShadow: '0 1px 1px rgba(0, 0, 0, 0.05)'
-    },
-
-    '.panel-default': {
-      borderColor: '#ddd',
-      $nest: {
-        '& > .panel-heading': {
-          color: '#363636',
-          backgroundColor: '#f5f5f5',
-          borderColor: '#ddd'
-        }
-      }
-    },
-
-    '.panel-heading': {
-      padding: '10px 15px',
-      borderBottom: '1px solid transparent',
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0
     }
   }
 });

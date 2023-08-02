@@ -59,7 +59,24 @@ export enum PFColors {
   // chart-specific color values, for rates charts where 4xx is really Danger not Warning
   ChartDanger = 'var(--pf-global--danger-color--300)',
   ChartOther = 'var(--pf-global--palette-black-1000)',
-  ChartWarning = 'var(--pf-global--danger-color--100)'
+  ChartWarning = 'var(--pf-global--danger-color--100)',
+
+  // PF background colors (compatible with dark mode)
+  BackgroundColor100 = 'var(--pf-global--BackgroundColor--100)',
+  BackgroundColor150 = 'var(--pf-global--BackgroundColor--150)',
+  BackgroundColor200 = 'var(--pf-global--BackgroundColor--200)',
+  BackgroundColor300 = 'var(--pf-global--BackgroundColor--300)',
+  BackgroundColor400 = 'var(--pf-global--BackgroundColor--400)',
+
+  // PF standard colors (compatible with dark mode)
+  Color100 = 'var(--pf-global--Color--100)',
+  Color200 = 'var(--pf-global--Color--200)',
+
+  // PF border colors (compatible with dark mode)
+  BorderColor100 = 'var(--pf-global--BorderColor--100)',
+  BorderColor200 = 'var(--pf-global--BorderColor--200)',
+  BorderColor300 = 'var(--pf-global--BorderColor--300)',
+  BorderColor400 = 'var(--pf-global--BorderColor--400)'
 }
 
 // The hex string value of the PF CSS variable

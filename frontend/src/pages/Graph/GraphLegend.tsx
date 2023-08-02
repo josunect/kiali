@@ -17,7 +17,7 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
   render() {
     const legendBoxStyle = kialiStyle({
       backgroundColor: PFColors.White,
-      border: '1px #ddd solid',
+      border: `1px solid ${PFColors.BorderColor100}`,
       margin: '0 0 3.25em 0',
       overflow: 'hidden',
       overflowY: 'auto',
