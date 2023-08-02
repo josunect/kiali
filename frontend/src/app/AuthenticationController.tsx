@@ -297,22 +297,18 @@ class AuthenticationControllerComponent extends React.Component<
 
   private setDocLayout = () => {
     // Set theme from browser cache
-    if (document.documentElement) {
-      const theme = localStorage.getItem(KIALI_THEME) ?? Theme.Light;
-      if (theme === Theme.Dark) {
-        document.documentElement.classList.add(PF_THEME_DARK);
-      }
-      store.dispatch(GlobalActions.setTheme(theme));
+    const theme = localStorage.getItem(KIALI_THEME) ?? this.getDefaultTheme();
+    if (theme === Theme.DARK) {
+      document.documentElement.classList.add(PF_THEME_DARK);
     }
+    store.dispatch(GlobalActions.setTheme(theme));
 
     // Set Kiosk mode
-    if (document.body) {
-      const isKiosk = isKioskMode();
-      if (isKiosk) {
-        document.body.classList.add('kiosk');
-      }
-      store.dispatch(GlobalActions.setKiosk(getKioskMode()));
+    const isKiosk = isKioskMode();
+    if (isKiosk) {
+      document.body.classList.add('kiosk');
     }
+    store.dispatch(GlobalActions.setKiosk(getKioskMode()));
   };
 
   private processServerStatus = (status: StatusState) => {
@@ -327,6 +323,15 @@ class AuthenticationControllerComponent extends React.Component<
         false
       );
     }
+  };
+
+  // Get default theme from system settings
+  private getDefaultTheme = (): Theme => {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return Theme.DARK;
+    }
+
+    return Theme.LIGHT;
   };
 }
 
