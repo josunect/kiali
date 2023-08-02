@@ -284,7 +284,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       </div>
     );
     return (
-      <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+      <div className={classes(containerPadding, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
         <div className={containerFlex}>
           <div className={filterToolbarStyle}>{filterToolbar}</div>
           <div className={rightToolbarStyle}>

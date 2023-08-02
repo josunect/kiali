@@ -97,14 +97,14 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.props.theme === Theme.Light) {
+    if (this.props.theme === Theme.LIGHT) {
       document.documentElement.classList.add(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.Dark));
-      localStorage.setItem(KIALI_THEME, Theme.Dark);
+      store.dispatch(GlobalActions.setTheme(Theme.DARK));
+      localStorage.setItem(KIALI_THEME, Theme.DARK);
     } else {
       document.documentElement.classList.remove(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.Light));
-      localStorage.setItem(KIALI_THEME, Theme.Light);
+      store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+      localStorage.setItem(KIALI_THEME, Theme.LIGHT);
     }
   };
 
@@ -139,7 +139,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.props.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
+          {this.props.theme === Theme.DARK ? Theme.LIGHT : Theme.DARK} theme
         </DropdownItem>
       </>
     );

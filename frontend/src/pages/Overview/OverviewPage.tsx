@@ -81,7 +81,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 const gridStyleCompact = (theme: string) => {
   return kialiStyle({
-    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
+    backgroundColor: theme === Theme.DARK ? PFColors.Black500 : '#f5f5f5',
     paddingBottom: '20px',
     marginTop: '0px'
   });
@@ -89,7 +89,7 @@ const gridStyleCompact = (theme: string) => {
 
 const gridStyleList = (theme: string) => {
   return kialiStyle({
-    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
+    backgroundColor: theme === Theme.DARK ? PFColors.Black500 : '#f5f5f5',
     // The VirtualTable component has a different style than cards
     // We need to adjust the grid style if we are on compact vs list view
     padding: '0 !important',

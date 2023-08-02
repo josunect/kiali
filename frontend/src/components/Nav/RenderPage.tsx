@@ -51,7 +51,7 @@ export class RenderPage extends React.Component<{ isGraph: boolean; theme: strin
     return (
       <>
         {!this.props.isGraph ? (
-          <div className={this.props.theme === Theme.Light ? containerGray : bgDarkSoft}>{component}</div>
+          <div className={this.props.theme === Theme.DARK ? bgDarkSoft : containerGray}>{component}</div>
         ) : (
           component
         )}

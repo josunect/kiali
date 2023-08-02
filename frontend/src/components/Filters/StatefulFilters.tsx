@@ -375,7 +375,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
-          className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
+          className={this.props.theme === Theme.DARK ? backgroundStyleDark : backgroundStyle}
         />
       );
     }
@@ -450,7 +450,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         aria-label="filter_select_type"
                         onChange={this.selectFilterType}
                         style={{ width: 'auto', borderColor: '#bbb' }}
-                        className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
+                        className={this.props.theme === Theme.DARK ? backgroundStyleDark : backgroundStyle}
                       >
                         {filterOptions}
                       </FormSelect>

@@ -81,7 +81,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   render() {
     const { title, disabled } = this.showTitle();
     return (
-      <div className={classes(mainPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+      <div className={classes(mainPadding, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
         <div className={flexStyle}>
           <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}

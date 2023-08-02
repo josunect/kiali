@@ -10,12 +10,7 @@ const containerPadding = kialiStyle({ padding: '30px 20px 0 20px' });
 export class RenderContent extends React.Component<{ needScroll?: boolean; theme?: string }> {
   render() {
     return (
-      <RenderComponentScroll
-        className={classes(
-          containerPadding,
-          this.props.theme === Theme.Light ? bgLight : this.props.theme === Theme.Dark ? bgDark : ''
-        )}
-      >
+      <RenderComponentScroll className={classes(containerPadding, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
         <div>{this.props.children}</div>
       </RenderComponentScroll>
     );

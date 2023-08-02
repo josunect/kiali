@@ -478,7 +478,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : this.props.theme === Theme.Light ? bgLight : bgDark
+                    this.props.replayActive ? replayBackground : this.props.theme === Theme.DARK ? bgDark : bgLight
                   }`}
                   isReadOnly={true}
                 >

@@ -27,7 +27,7 @@ export const bgDarkSoft = kialiStyle({
 
 export const getGraphBackgroundStyle = (theme: string) => {
   return {
-    backgroundColor: theme === Theme.Dark ? PFColors.Black700 : PFColors.White,
-    color: theme === Theme.Dark ? PFColors.White : PFColors.Black700
+    backgroundColor: theme === Theme.DARK ? PFColors.Black700 : PFColors.White,
+    color: theme === Theme.DARK ? PFColors.White : PFColors.Black700
   };
 };

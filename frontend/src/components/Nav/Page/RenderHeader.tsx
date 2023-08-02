@@ -52,7 +52,7 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
     // On kiosk mode, it should be hidden
     return isKiosk(this.props.kiosk) ? null : (
       <>
-        <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+        <div className={classes(containerPadding, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
           {this.props.location && (
             <>
               <div className={breadcrumbMargin}>
@@ -69,7 +69,7 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
           <div
             className={classes(
               actionsToolbarStyle,
-              this.props.theme === Theme.Light ? `${bgLight} ${borderBottom}` : bgDark
+              this.props.theme === Theme.DARK ? bgDark : `${bgLight} ${borderBottom}`
             )}
           >
             {this.props.actionsToolbar}

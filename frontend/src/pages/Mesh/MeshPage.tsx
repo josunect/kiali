@@ -122,14 +122,14 @@ export const MeshPage: React.FunctionComponent = () => {
 
   return (
     <>
-      <div className={theme === Theme.Light ? bgLight : bgDark}>
+      <div className={theme === Theme.DARK ? bgDark : bgLight}>
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
           rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
         />
       </div>
       <RenderContent>
-        <div className={classes(containerPadding, theme === Theme.Light ? bgLight : bgDark)}>
+        <div className={classes(containerPadding, theme === Theme.DARK ? bgDark : bgLight)}>
           <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
             <TableHeader />
             <TableBody />

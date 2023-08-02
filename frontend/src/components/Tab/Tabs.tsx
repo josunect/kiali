@@ -100,7 +100,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     return (
       <Tabs
         id={this.props.id}
-        className={classes(this.props.className, this.props.theme === Theme.Light ? bgLight : bgDark)}
+        className={classes(this.props.className, this.props.theme === Theme.DARK ? bgDark : bgLight)}
         activeKey={this.activeIndex()}
         onSelect={(_, ek) => {
           if (!this.isLinkTab(ek as number)) {

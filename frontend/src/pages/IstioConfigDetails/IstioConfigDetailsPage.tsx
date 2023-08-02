@@ -477,7 +477,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
     helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
 
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
+    const ace_theme = this.props.theme === Theme.DARK ? 'twilight' : 'eclipse';
 
     const panelContent = (
       <DrawerPanelContent>

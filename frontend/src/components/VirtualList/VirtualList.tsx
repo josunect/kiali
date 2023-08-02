@@ -160,7 +160,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     });
 
     return (
-      <div className={classes(virtualListStyle, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+      <div className={classes(virtualListStyle, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
         {childrenWithProps}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />

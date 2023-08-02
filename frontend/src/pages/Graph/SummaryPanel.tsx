@@ -110,9 +110,9 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     return (
       <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
-          <div className={classes(mainTopStyle, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+          <div className={classes(mainTopStyle, this.props.theme === Theme.DARK ? bgDark : bgLight)}>
             <div
-              className={classes(toggleSidePanelStyle, this.props.theme === Theme.Light ? bgLight : bgDarkSoft)}
+              className={classes(toggleSidePanelStyle, this.props.theme === Theme.DARK ? bgDarkSoft : bgLight)}
               onClick={this.togglePanel}
             >
               {this.state.isVisible ? (

@@ -284,13 +284,13 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
+    const ace_theme = this.props.theme === Theme.DARK ? 'twilight' : 'eclipse';
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
         <Tab
-          className={this.props.theme === Theme.Light ? bgLight : bgDarkMedium}
+          className={this.props.theme === Theme.DARK ? bgDarkMedium : bgLight}
           key={'tab_' + value}
           eventKey={index}
           title={title}

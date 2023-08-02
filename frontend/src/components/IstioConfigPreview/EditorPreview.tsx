@@ -66,7 +66,7 @@ export class EditorPreviewComponent extends React.Component<Props, State> {
   };
 
   render() {
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
+    const ace_theme = this.props.theme === Theme.DARK ? 'twilight' : 'eclipse';
     return (
       <AceEditor
         ref={this.aceEditorRef}

@@ -239,7 +239,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   render() {
     const jaegerURL = this.getJaegerUrl();
-    const bg = this.props.theme === Theme.Light ? bgLight : bgDark;
+    const bg = this.props.theme === Theme.DARK ? bgDark : bgLight;
 
     return (
       <>

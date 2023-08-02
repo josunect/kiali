@@ -459,7 +459,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : this.props.theme === Theme.Light ? bgLight : bgDark
+                    this.props.replayActive ? replayBackground : this.props.theme === Theme.DARK ? bgDark : bgLight
                   }`}
                   isReadOnly={true}
                 >
