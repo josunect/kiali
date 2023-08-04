@@ -14,6 +14,7 @@ import {
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
+import { PFColors } from 'components/Pf/PfColors';
 
 type Props = ChartProps & {
   labelName: string;
@@ -193,7 +194,7 @@ export class SparklineChart extends React.Component<Props, State> {
             name={this.props.name + '-legend'}
             data={this.props.series.map((s, idx) => {
               if (this.state.hiddenSeries.has(idx)) {
-                return { ...s.legendItem, symbol: { fill: '#72767b' } };
+                return { ...s.legendItem, symbol: { fill: PFColors.Color200 } };
               }
               return s.legendItem;
             })}

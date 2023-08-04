@@ -25,6 +25,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import regression from 'regression';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFColors } from 'components/Pf/PfColors';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
   chartHeight?: number;
@@ -64,10 +65,10 @@ type Padding = { top: number; left: number; right: number; bottom: number };
 const overlayName = 'overlay';
 
 const AxisStyle = {
-  tickLabels: { fontSize: 12, padding: 2 },
+  tickLabels: { fontSize: 12, padding: 2, fill: PFColors.Color100 },
   grid: {
     fill: 'none',
-    stroke: '#ECEFF1',
+    stroke: PFColors.ColorLight200,
     strokeDasharray: '10, 5',
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
@@ -265,7 +266,9 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={<ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
+            axisLabelComponent={
+              <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} style={{ fill: PFColors.Color100 }} />
+            }
             style={AxisStyle}
           />
           {useSecondAxis && this.props.overlay && (
@@ -319,7 +322,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               width={this.state.width}
               style={{
                 data: { cursor: 'pointer', padding: 0 },
-                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND }
+                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND, fill: PFColors.Color100 }
               }}
               borderPadding={{
                 top: 5,
@@ -530,7 +533,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     return this.props.data.map(s => {
       const name = s.legendItem.name;
       if (this.state.hiddenSeries.has(s.legendItem.name)) {
-        return { name, symbol: { ...s.legendItem.symbol, fill: '#72767b' } };
+        return { name, symbol: { ...s.legendItem.symbol, fill: PFColors.Color200 } };
       }
       return { ...s.legendItem, name };
     });

@@ -1,3 +1,4 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const sliderStyle = kialiStyle({
@@ -19,7 +20,7 @@ export const sliderStyle = kialiStyle({
     '.slider-handle': {
       width: '16px',
       height: '16px',
-      border: '1px solid #bbb'
+      border: `1px solid ${PFColors.BorderColor100}`
     },
     '.slider-tick': {
       backgroundColor: 'transparent !important',

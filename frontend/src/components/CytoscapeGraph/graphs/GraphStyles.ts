@@ -72,7 +72,7 @@ const NodeIconTrafficShifting = icons.istio.trafficShifting.className; // share-
 const NodeIconWorkloadEntry = icons.istio.workloadEntry.className; // pf-icon-virtual-machine
 const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.Black1000;
-const NodeTextBackgroundColor = PFColors.White;
+const NodeTextBackgroundColor = PFColors.BackgroundColor100;
 const NodeTextBackgroundColorBox = PFColors.Black200;
 const NodeBadgeBackgroundColor = PFColors.Purple500;
 const NodeBadgeColor = PFColors.White;
@@ -132,7 +132,7 @@ const hostsList = kialiStyle({
   textAlign: 'initial',
   marginTop: 2,
   paddingTop: 2,
-  borderTop: `1px solid ${PFColors.Black600}`
+  borderTop: `1px solid ${PFColors.Color200}`
 });
 
 const labelDefault = kialiStyle({
@@ -170,7 +170,7 @@ export class GraphStyles {
     EdgeColorTCPWithTraffic = PFColorVals.Blue600;
     EdgeTextOutlineColor = PFColorVals.White;
     NodeColorBorder = PFColorVals.Black500;
-    NodeColorBorderBox = PFColorVals.Black600;
+    NodeColorBorderBox = PFColorVals.Color200;
     NodeColorBorderDegraded = PFColorVals.Warning;
     NodeColorBorderFailure = PFColorVals.Danger;
     NodeColorBorderHover = PFColorVals.Blue300;
@@ -180,8 +180,8 @@ export class GraphStyles {
     NodeColorFillBoxCluster = PFColorVals.Black300;
     NodeColorFillBoxNamespace = PFColorVals.Black100;
     NodeColorFillHover = PFColorVals.Blue50;
-    NodeColorFillHoverDegraded = '#fdf2e5'; // roughly an Orange50 if it were defined
-    NodeColorFillHoverFailure = '#ffe6e6'; // very close to Red50 if we want to change
+    NodeColorFillHoverDegraded = PFColorVals.Orange50;
+    NodeColorFillHoverFailure = PFColorVals.Red50;
   };
 
   static options() {

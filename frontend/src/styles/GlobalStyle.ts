@@ -9,7 +9,6 @@ export const globalStyle = kialiStyle({
   fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
   fontSize: '14px',
   overflow: 'hidden',
-  color: '#363636',
   $nest: {
     /**
      * Kiosk mode
@@ -34,11 +33,6 @@ export const globalStyle = kialiStyle({
       verticalAlign: 'middle'
     },
 
-    hr: {
-      border: 0,
-      borderTop: `1px solid ${PFColors.BorderColor100}`
-    },
-
     'input[type=checkbox], input[type=radio]': {
       margin: '4px 0 0',
       lineHeight: 'normal'
@@ -59,7 +53,7 @@ export const globalStyle = kialiStyle({
      */
     '.pf-c-login, .login-pf': {
       backgroundImage: 'none',
-      backgroundColor: '#030303'
+      backgroundColor: PFColors.Black1000
     },
 
     /**

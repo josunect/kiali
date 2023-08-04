@@ -188,7 +188,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
         : undefined;
 
     return (
-      <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
+      <Card isCompact>
         <JaegerTraceTitle
           formattedTrace={formattedTrace}
           externalURL={jaegerURL ? `${jaegerURL}/trace/${trace.traceID}` : undefined}

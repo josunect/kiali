@@ -14,6 +14,7 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { GlobalActions } from '../../../actions/GlobalActions';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type UserProps = {
   session?: LoginSession;
@@ -30,6 +31,14 @@ type UserState = {
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
 };
+
+const dropdownStyle = kialiStyle({
+  $nest: {
+    button: {
+      padding: 0
+    }
+  }
+});
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
   constructor(props: UserProps) {
@@ -154,6 +163,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
         />
         {this.props.session && (
           <Dropdown
+            className={dropdownStyle}
             isPlain={true}
             position="right"
             onSelect={this.onDropdownSelect}
