@@ -141,6 +141,7 @@ type ReduxProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
+  theme: string;
 };
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
@@ -897,7 +898,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   summaryData: state.graph.summaryData,
   trace: state.jaegerState?.selectedTrace,
   trafficRates: trafficRatesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

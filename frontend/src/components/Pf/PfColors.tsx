@@ -11,12 +11,12 @@
 // Colors used by Kiali for CSS styling
 export enum PFColors {
   Black100 = 'var(--pf-global--palette--black-100)',
-  Black150 = 'var(--pf-global--palette--black-150)', // use instead of GrayBackground
+  Black150 = 'var(--pf-global--palette--black-150)',
   Black200 = 'var(--pf-global--palette--black-200)',
   Black300 = 'var(--pf-global--palette--black-300)',
   Black400 = 'var(--pf-global--palette--black-400)',
   Black500 = 'var(--pf-global--palette--black-500)',
-  Black600 = 'var(--pf-global--palette--black-600)', // use instead of Gray
+  Black600 = 'var(--pf-global--palette--black-600)',
   Black700 = 'var(--pf-global--palette--black-700)',
   Black800 = 'var(--pf-global--palette--black-800)',
   Black900 = 'var(--pf-global--palette--black-900)',
@@ -78,7 +78,8 @@ export enum PFColors {
   // PF border colors (compatible with dark mode)
   BorderColor100 = 'var(--pf-global--BorderColor--100)',
   BorderColor200 = 'var(--pf-global--BorderColor--200)',
-  BorderColor300 = 'var(--pf-global--BorderColor--300)'
+  BorderColor300 = 'var(--pf-global--BorderColor--300)',
+  BorderColorLight100 = 'var(--pf-global--BorderColor--light-100)'
 }
 
 // The hex string value of the PF CSS variable
@@ -117,9 +118,6 @@ export type PFColorValues = {
 
   Color100: PFColorVal;
   Color200: PFColorVal;
-  ColorLight100: PFColorVal;
-  ColorLight200: PFColorVal;
-  ColorLight300: PFColorVal;
 
   BorderColor100: PFColorVal;
   BorderColor200: PFColorVal;
@@ -161,13 +159,10 @@ export const setPFColorVals = (element: Element) => {
     BackgroundColor300: getComputedStyle(element).getPropertyValue('--pf-global--BackgroundColor--300'),
 
     Color100: getComputedStyle(element).getPropertyValue('--pf-global--Color--100'),
-    Color200: getComputedStyle(element).getPropertyValue('--pf-global--Color--100'),
-    ColorLight100: getComputedStyle(element).getPropertyValue('--pf-global--Color--light-100'),
-    ColorLight200: getComputedStyle(element).getPropertyValue('--pf-global--Color--light-200'),
-    ColorLight300: getComputedStyle(element).getPropertyValue('--pf-global--Color--light-300'),
+    Color200: getComputedStyle(element).getPropertyValue('--pf-global--Color--200'),
 
     BorderColor100: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--100'),
-    BorderColor200: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--100'),
-    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--100')
+    BorderColor200: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--200'),
+    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--300')
   };
 };

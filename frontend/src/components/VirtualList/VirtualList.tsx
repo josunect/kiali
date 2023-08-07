@@ -14,12 +14,10 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 
 const virtualListStyle = kialiStyle({
   padding: '20px',
-  marginBottom: '20px',
-  backgroundColor: PFColors.BackgroundColor150
+  marginBottom: '20px'
 });
 
 // ******************************

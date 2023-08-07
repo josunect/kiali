@@ -151,7 +151,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
         displayMode={'large'}
         colorMap={HeatMap.HealthColorMap}
         dataRange={{ from: -10, to: 10 }}
-        colorUndefined={PFColors.Black200}
+        colorUndefined={PFColors.ColorLight200}
         valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
         tooltip={(x, _, v) => {
           // Build explanation tooltip

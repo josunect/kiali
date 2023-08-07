@@ -64,7 +64,7 @@ type Padding = { top: number; left: number; right: number; bottom: number };
 
 const overlayName = 'overlay';
 
-const AxisStyle = {
+const axisStyle = {
   tickLabels: { fontSize: 12, padding: 2, fill: PFColors.Color100 },
   grid: {
     fill: 'none',
@@ -239,21 +239,21 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             this.props.xAxis === 'series' ? (
               <ChartAxis
                 domain={[0, filteredData.length + 1]}
-                style={AxisStyle}
+                style={axisStyle}
                 tickValues={filteredData.map(s => s.legendItem.name)}
                 tickFormat={() => ''}
               />
             ) : this.state.width <= MIN_WIDTH ? (
               <ChartAxis
                 tickCount={scaleInfo.count}
-                style={AxisStyle}
+                style={axisStyle}
                 domain={this.props.timeWindow}
                 tickFormat={t => {
                   return `:${t.getMinutes()}`;
                 }}
               />
             ) : (
-              <ChartAxis tickCount={scaleInfo.count} style={AxisStyle} domain={this.props.timeWindow} />
+              <ChartAxis tickCount={scaleInfo.count} style={axisStyle} domain={this.props.timeWindow} />
             )
           }
           <ChartAxis
@@ -269,13 +269,13 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             axisLabelComponent={
               <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} style={{ fill: PFColors.Color100 }} />
             }
-            style={AxisStyle}
+            style={axisStyle}
           />
           {useSecondAxis && this.props.overlay && (
             <ChartAxis
               dependentAxis={true}
               offsetX={this.state.width - overlayRightPadding}
-              style={AxisStyle}
+              style={axisStyle}
               tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
               tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
               tickLabelComponent={<ChartLabel dx={15} textAnchor={'start'} />}
@@ -284,7 +284,15 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 this.props.overlay?.info.lineInfo.unit || '',
                 Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
               )}
-              axisLabelComponent={<ChartLabel y={-10} x={this.state.width} angle={0} renderInPortal={true} />}
+              axisLabelComponent={
+                <ChartLabel
+                  y={-10}
+                  x={this.state.width}
+                  angle={0}
+                  renderInPortal={true}
+                  style={{ fill: PFColors.Color100 }}
+                />
+              }
             />
           )}
           {this.props.xAxis === 'series'

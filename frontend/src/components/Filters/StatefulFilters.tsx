@@ -54,7 +54,7 @@ const bottomPadding = kialiStyle({
 
 const formSelectStyle = kialiStyle({
   width: 'auto',
-  borderColor: PFColors.Black400,
+  borderColor: PFColors.BorderColorLight100,
   backgroundColor: PFColors.BackgroundColor200
 });
 

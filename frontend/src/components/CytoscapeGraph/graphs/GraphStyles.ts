@@ -72,7 +72,7 @@ const NodeIconTrafficShifting = icons.istio.trafficShifting.className; // share-
 const NodeIconWorkloadEntry = icons.istio.workloadEntry.className; // pf-icon-virtual-machine
 const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.Black1000;
-const NodeTextBackgroundColor = PFColors.BackgroundColor100;
+const NodeTextBackgroundColor = PFColors.White;
 const NodeTextBackgroundColorBox = PFColors.Black200;
 const NodeBadgeBackgroundColor = PFColors.Purple500;
 const NodeBadgeColor = PFColors.White;
@@ -170,7 +170,7 @@ export class GraphStyles {
     EdgeColorTCPWithTraffic = PFColorVals.Blue600;
     EdgeTextOutlineColor = PFColorVals.White;
     NodeColorBorder = PFColorVals.Black500;
-    NodeColorBorderBox = PFColorVals.Color200;
+    NodeColorBorderBox = PFColorVals.BorderColor200;
     NodeColorBorderDegraded = PFColorVals.Warning;
     NodeColorBorderFailure = PFColorVals.Danger;
     NodeColorBorderHover = PFColorVals.Blue300;
