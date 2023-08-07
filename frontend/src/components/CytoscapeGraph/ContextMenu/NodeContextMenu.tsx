@@ -222,7 +222,7 @@ export function NodeContextMenuComponent(props: Props) {
     // Otherwise, the item should be disabled
     if (!enabledItem) {
       return (
-        <div key={eventKey} className={contextMenuItem} style={{ color: PFColors.ColorLight300 }}>
+        <div key={eventKey} className={contextMenuItem} style={{ color: PFColors.Color200 }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{WIZARD_TITLES[eventKey]}</div>
           </Tooltip>
@@ -250,7 +250,7 @@ export function NodeContextMenuComponent(props: Props) {
       !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/
     ) {
       return (
-        <div className={contextMenuItem} style={{ color: PFColors.ColorLight300 }}>
+        <div className={contextMenuItem} style={{ color: PFColors.Color200 }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>Delete Traffic Routing</div>
           </Tooltip>

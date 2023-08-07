@@ -115,6 +115,10 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
       localStorage.setItem(KIALI_THEME, Theme.LIGHT);
     }
+
+    // Refresh page to load new theme (certain components are not reloaded like cytoscape graph)
+    const refreshTick = new CustomEvent('refreshTick', { detail: Date.now() });
+    document.dispatchEvent(refreshTick);
   };
 
   extendSession = (session: LoginSession) => {

@@ -170,7 +170,7 @@ export class GraphStyles {
     EdgeColorTCPWithTraffic = PFColorVals.Blue600;
     EdgeTextOutlineColor = PFColorVals.White;
     NodeColorBorder = PFColorVals.Black500;
-    NodeColorBorderBox = PFColorVals.BorderColor200;
+    NodeColorBorderBox = PFColorVals.Black600;
     NodeColorBorderDegraded = PFColorVals.Warning;
     NodeColorBorderFailure = PFColorVals.Danger;
     NodeColorBorderHover = PFColorVals.Blue300;
