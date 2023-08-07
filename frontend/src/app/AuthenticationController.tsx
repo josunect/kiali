@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -29,6 +29,7 @@ import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
+import { getKialiTheme } from 'utils/ThemeUtils';
 
 interface AuthenticationControllerReduxProps {
   addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
@@ -297,7 +298,7 @@ class AuthenticationControllerComponent extends React.Component<
 
   private setDocLayout = () => {
     // Set theme from browser cache
-    const theme = localStorage.getItem(KIALI_THEME) ?? this.getDefaultTheme();
+    const theme = getKialiTheme();
     if (theme === Theme.DARK) {
       document.documentElement.classList.add(PF_THEME_DARK);
     }
@@ -323,15 +324,6 @@ class AuthenticationControllerComponent extends React.Component<
         false
       );
     }
-  };
-
-  // Get default theme from system settings
-  private getDefaultTheme = (): Theme => {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return Theme.DARK;
-    }
-
-    return Theme.LIGHT;
   };
 }
 

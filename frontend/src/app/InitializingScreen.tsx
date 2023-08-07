@@ -6,7 +6,7 @@ import { isKioskMode } from '../utils/SearchParamUtils';
 import kialiLogoLight from '../assets/img/logo-lightbkg.svg';
 import kialiLogoDark from '../assets/img/logo-alt.svg';
 import { PF_THEME_DARK, Theme } from 'types/Common';
-import { getTheme } from 'utils/ThemeUtils';
+import { getKialiTheme } from 'utils/ThemeUtils';
 
 type initializingScreenProps = {
   errorMsg?: string;
@@ -61,7 +61,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     document.body.classList.add('kiosk');
   }
 
-  const theme = getTheme();
+  const theme = getKialiTheme();
   if (theme === Theme.DARK) {
     document.documentElement.classList.add(PF_THEME_DARK);
   }
