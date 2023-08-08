@@ -5,17 +5,23 @@ import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2c0e5fc90 (Kiali Dark Mode Theme (#9))
 import { PFColors } from 'components/Pf/PfColors';
 
 const containerStyle = kialiStyle({
   padding: '0 20px 28px 20px',
   backgroundColor: PFColors.BackgroundColor100
 });
+<<<<<<< HEAD
 =======
 import { bgDark, bgLight } from 'styles/ThemeStyle';
 import { Theme } from 'types/Common';
 import { classes } from 'typestyle';
 >>>>>>> 95c12bfb5 (Refactor dark theme changes (#8))
+=======
+>>>>>>> 2c0e5fc90 (Kiali Dark Mode Theme (#9))
 
 // This magic style tries to adjust Breadcrumb with Namespace selector
 // to give impression that both components are placed in the same location
@@ -58,10 +64,14 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
     return isKiosk(this.props.kiosk) ? null : (
       <>
 <<<<<<< HEAD
+<<<<<<< HEAD
         <div className={containerStyle}>
 =======
         <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
 >>>>>>> 95c12bfb5 (Refactor dark theme changes (#8))
+=======
+        <div className={containerStyle}>
+>>>>>>> 2c0e5fc90 (Kiali Dark Mode Theme (#9))
           {this.props.location && (
             <div className={breadcrumbMargin}>
               <div className={breadcrumbStyle}>
@@ -72,6 +82,7 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
           )}
           {this.props.children}
         </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
         {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
 =======
@@ -86,6 +97,9 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
           </div>
         )}
 >>>>>>> 95c12bfb5 (Refactor dark theme changes (#8))
+=======
+        {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
+>>>>>>> 2c0e5fc90 (Kiali Dark Mode Theme (#9))
       </>
     );
   }
