@@ -8,6 +8,14 @@ import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
 import 'react-datepicker/dist/react-datepicker.css';
 
+// Enables ACE editor YAML themes
+import 'ace-builds/src-noconflict/mode-yaml';
+import 'ace-builds/src-noconflict/theme-eclipse';
+import 'ace-builds/src-noconflict/theme-twilight';
+
+// Enables the search box for the ACE editor
+import 'ace-builds/src-noconflict/ext-searchbox';
+
 declare global {
   interface Date {
     toLocaleStringWithConditionalDate(): string;
