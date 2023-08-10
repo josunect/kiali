@@ -1,4 +1,3 @@
-import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -45,49 +44,6 @@ export const globalStyle = kialiStyle({
       padding: 0,
       height: '100%',
       overflowY: 'hidden'
-    },
-
-    /**
-     * Ensure dark background for login page.
-     * - TODO: Revisit this after updating to use standard PF login components
-     */
-    '& .pf-c-login, .login-pf': {
-      backgroundImage: 'none',
-      backgroundColor: PFColors.Black1000
-    },
-
-    /**
-     * Datepicker overrides for graph replay and other uses
-     * - note: global .tooltip setting but I think it should be OK
-     */
-    // use PF fonts and font-size
-    '& .react-datepicker': {
-      fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
-      fontSize: 'var(--pf-global--FontSize)'
-    },
-
-    // provide more space for time container given bigger font
-    '& .react-datepicker__time-container': {
-      width: '110px',
-      $nest: {
-        '& .react-datepicker__time': {
-          $nest: {
-            '& .react-datepicker__time-box': {
-              width: '100%'
-            }
-          }
-        }
-      }
-    },
-
-    // Make sure datepicker popper rises above other inflated z-index elements
-    //   - secondaryMasthead currently at 10
-    '& .react-datepicker-popper': {
-      zIndex: 11
-    },
-
-    '& .react-datepicker__navigation--next--with-time:not(.react-datepicker__navigation--next--with-today-button)': {
-      right: '118px'
     },
 
     /**
