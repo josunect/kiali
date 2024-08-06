@@ -22,9 +22,7 @@ const aceOptions: AceOptions = {
 };
 
 const aceEditorStyle = kialiStyle({
-  position: 'relative',
   marginTop: '0.5rem',
-  minHeight: '200px',
   backgroundColor: PFColors.BackgroundColor100,
   $nest: {
     '& .ace_gutter': {
