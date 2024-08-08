@@ -27,8 +27,14 @@ const aceEditorStyle = kialiStyle({
   $nest: {
     '& .ace_gutter': {
       backgroundColor: PFColors.BackgroundColor100,
-      borderRight: 0
+      borderRight: 0,
+      left: '-1rem !important'
     },
+
+    '& .ace_scroller': {
+      left: '1rem !important'
+    },
+
     '& .ace_cursor': {
       opacity: 0
     }
