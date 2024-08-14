@@ -139,6 +139,15 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
 
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+
+    echo "Deploying travels demo ..."
+    "${SCRIPT_DIR}/install-travel-agency-demo.sh" -c kubectl -ei false -di travel-agency,travel-portal,travel-control
+    kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+            { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | kubectl apply -f -; }
+    kubectl apply -f "${HACK_SCRIPT_DIR}/travels-demo/gateways.yaml"
+    ${ISTIO_DIR}/bin/istioctl waypoint -n travel-control apply --enroll-namespace --wait
+    ${ISTIO_DIR}/bin/istioctl waypoint -n travel-agency apply --enroll-namespace --wait
+
   else
     gateway_yaml=""
     if [ "${USE_GATEWAY_API}" == "true" ]; then
