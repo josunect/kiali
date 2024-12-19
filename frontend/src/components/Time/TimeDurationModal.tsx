@@ -28,8 +28,8 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
   const reduxRefreshInterval = useKialiSelector(state => state.userSettings.refreshInterval);
   const reduxTimeRange = useKialiSelector(state => state.userSettings.timeRange);
 
-  const [duration, setDuration] = React.useState(0);
-  const [refreshInterval, setRefreshInterval] = React.useState(0);
+  const [duration, setDuration] = React.useState<number>(0);
+  const [refreshInterval, setRefreshInterval] = React.useState<number>(0);
   const [timeRange, setTimeRange] = React.useState<TimeRange>({});
 
   React.useEffect(() => {
