@@ -238,6 +238,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
+            app={this.state.workload?.labels['app']}
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.workloadId.namespace}
             cluster={this.state.cluster}
