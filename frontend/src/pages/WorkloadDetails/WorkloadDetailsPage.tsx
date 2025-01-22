@@ -243,6 +243,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             cluster={this.state.cluster}
             target={this.props.workloadId.workload}
             targetKind="workload"
+            fromWaypoint={
+              this.state.workload?.waypointWorkloads && this.state.workload.waypointWorkloads.length > 0 ? true : false
+            }
           />
         </Tab>
       );
