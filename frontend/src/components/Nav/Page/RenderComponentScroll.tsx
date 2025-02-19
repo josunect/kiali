@@ -26,6 +26,7 @@ const componentStyle = kialiStyle({
 interface Props {
   className?: any;
   onResize?: (height: number) => void;
+  scrollStyle?: React.CSSProperties;
 }
 
 interface State {
@@ -68,7 +69,7 @@ export class RenderComponentScroll extends React.Component<Props, State> {
 
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     if (globalScrollbar === 'false') {
-      scrollStyle = { height: this.state.height, overflowY: 'auto', width: '100%' };
+      scrollStyle = this.props.scrollStyle ?? { height: this.state.height, overflowY: 'auto', width: '100%' };
     }
 
     return (
