@@ -11,10 +11,11 @@ import * as MetricsHelper from '../Metrics/Helper';
 import { Dashboard } from '../Charts/Dashboard';
 import { DashboardModel } from '../../types/Dashboards';
 import { GrafanaLinks } from '../Metrics/GrafanaLinks';
-import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
+import { RenderComponentScroll } from 'components/Nav/Page';
 import { kialiStyle } from '../../styles/StyleUtils';
 
 type ZtunnelMetricsProps = {
@@ -24,16 +25,11 @@ type ZtunnelMetricsProps = {
   rangeDuration: TimeRange;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: 'calc(100vh - 380px)',
-  overflowY: 'auto'
-});
-
 export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetricsProps) => {
   const urlParams = new URLSearchParams(location.getSearch());
   const expandedChart = urlParams.get('expand') ?? undefined;
   const toolbarRef = React.createRef<HTMLDivElement>();
-  const tabHeight = 600;
+  const [tabHeight, setTabHeight] = React.useState<number>(600);
   const [metrics, setMetrics] = React.useState<DashboardModel>();
   const [grafanaLinks, setGrafanaLinks] = React.useState<GrafanaInfo>();
   const rateParams = computePrometheusRateParams(
@@ -84,62 +80,64 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   React.useEffect(() => {
     fetchMetrics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.rangeDuration, props.lastRefreshAt]);
 
   React.useEffect(() => {
     fetchGrafanaInfo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const settings = MetricsHelper.retrieveMetricsSettings(200);
-  const [dashboardHeight, setDashboardHeight] = React.useState<number>(1000);
 
   const expandHandler = (expandedChart?: string): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 
     if (expandedChart) {
-      setDashboardHeight(tabHeight);
       urlParams.set('expand', expandedChart);
-    } else {
-      setDashboardHeight(1000);
     }
 
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   };
 
+  const heightStyle = kialiStyle({
+    padding: 0
+  });
+
   return (
-    <div>
-      {grafanaLinks && (
-        <div ref={toolbarRef}>
-          <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
-            <ToolbarGroup>
-              <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
-                <GrafanaLinks
-                  links={grafanaLinks?.externalLinks}
-                  namespace={props.namespace}
-                  object="ztunnel"
-                  objectType={MetricsObjectTypes.ZTUNNEL}
-                />
-              </ToolbarItem>
-            </ToolbarGroup>
-          </Toolbar>
-        </div>
-      )}
-      {metrics && (
-        <div className={fullHeightStyle}>
-          <Dashboard
-            dashboard={metrics}
-            labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
-            maximizedChart={expandedChart}
-            expandHandler={expandHandler}
-            labelPrettifier={MetricsHelper.prettyLabelValues}
-            showSpans={false}
-            dashboardHeight={dashboardHeight}
-          />
-        </div>
-      )}
-    </div>
+    <>
+      <RenderComponentScroll className={heightStyle} scrollStyle={{}} onResize={height => setTabHeight(height)}>
+        <Card>
+          <CardBody className={heightStyle}>
+            {grafanaLinks && (
+              <div ref={toolbarRef}>
+                <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
+                  <ToolbarGroup>
+                    <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+                      <GrafanaLinks
+                        links={grafanaLinks?.externalLinks}
+                        namespace={props.namespace}
+                        object="ztunnel"
+                        objectType={MetricsObjectTypes.ZTUNNEL}
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                </Toolbar>
+              </div>
+            )}
+            {metrics && (
+              <Dashboard
+                dashboard={metrics}
+                labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
+                maximizedChart={expandedChart}
+                expandHandler={expandHandler}
+                labelPrettifier={MetricsHelper.prettyLabelValues}
+                showSpans={false}
+                dashboardHeight={expandedChart ? tabHeight * 0.75 : tabHeight * 1.5}
+              />
+            )}
+          </CardBody>
+        </Card>
+      </RenderComponentScroll>
+    </>
   );
 };
