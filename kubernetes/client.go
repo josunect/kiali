@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	//"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
@@ -168,12 +169,20 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 // getConfigForLocalCluster returns the config for the cluster on which Kiali is running.
 // It returns an error on any problem
 func getConfigForLocalCluster() (*rest.Config, error) {
-	incluster, err := rest.InClusterConfig()
-	if err != nil {
-		log.Errorf("Error '%v' getting config for local cluster", err.Error())
-		return nil, err
+	remoteSecretPath := "/kiali-remote-secret/kiali"
+	if remoteSecret, readErr := GetRemoteSecret(remoteSecretPath); readErr == nil {
+		log.Debugf("Using remote secret for local cluster config found at: [%s]. Kiali must be running outside the kube cluster.", remoteSecretPath)
+		return clientcmd.NewDefaultClientConfig(*remoteSecret, nil).ClientConfig()
+	} else {
+		log.Debugf("Unable to read remote secret. It may or may not exist. Error: %v. Falling back to in cluster config", readErr)
+		// Fallback to in cluster config
+		incluster, err := rest.InClusterConfig()
+		if err != nil {
+			log.Errorf("Error '%v' getting config for local cluster", err.Error())
+			return nil, err
+		}
+		return incluster, nil
 	}
-	return incluster, nil
 }
 
 // newClientFromConfig creates a new client to the Kubernetes and Istio APIs.
