@@ -31,8 +31,13 @@ create_crossnetwork_gateway() {
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi
-  
-  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+
+  if [ "${AMBIENT}" == "true" ]; then
+    local ambient_arg="--ambient"
+  fi
+
+  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}" "${ambient_arg}")"
+
   local profile_flag=""
   if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
     profile_flag="--set profile=openshift"
