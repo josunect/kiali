@@ -33,10 +33,10 @@ create_crossnetwork_gateway() {
   fi
 
   if [ "${AMBIENT}" == "true" ]; then
-    local ambient_arg="--ambient"
+    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
+  elsif
+    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
   fi
-
-  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}" "${ambient_arg}")"
 
   local profile_flag=""
   if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
