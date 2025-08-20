@@ -457,6 +457,11 @@ setup_kind_multicluster() {
   else
     MEMORY_REQUEST_ARG=""
   fi
+  if [ -n "$AMBIENT" ]; then
+    AMBIENT_ARG="-a true"
+  else
+    AMBIENT_ARG=""
+  fi
 
   local cluster1_context
   local cluster2_context
@@ -473,6 +478,7 @@ setup_kind_multicluster() {
       --istio-dir "${istio_dir}" \
       ${MEMORY_REQUEST_ARG} \
       ${MEMORY_LIMIT_ARG} \
+      ${AMBIENT_ARG} \
       ${kind_node_image:-} \
       ${hub_arg:-} \
       ${istio_version_arg}

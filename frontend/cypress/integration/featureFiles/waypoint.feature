@@ -382,7 +382,7 @@ Feature: Kiali Waypoint related features
     Then user goes to the waypoint "Info" subtab
     And validates waypoint Info data for "service"
 
-  Scenario: [Waypoint details] The waypoint workload log level os updated
+  Scenario: [Waypoint details] The waypoint workload log level is updated
     Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     When the user goes to the "Logs" tab
     Then the user updates the log level to "Debug"

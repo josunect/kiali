@@ -5,6 +5,7 @@ infomsg() {
 }
 
 # Suites
+AMBIENT=""
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 FRONTEND="frontend"
@@ -29,6 +30,10 @@ WITH_VIDEO="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -am|--ambient)
+      AMBIENT="${2}"
+      shift;shift
+      ;;
     -hcd|--helm-charts-dir)
       HELM_CHARTS_DIR="${2}"
       shift;shift
@@ -92,6 +97,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -am|--ambient <true|false>
+    If true, install istio ambient profile. Just valid for multi primary suite (alpha).
+    Default: false
   -hcd|--helm-charts-dir
     The directory where the Helm charts are located. If not specified, the Helm charts for the target branch will be used.
   -iv|--istio-version <version>
@@ -146,6 +154,7 @@ fi
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+AMBIENT=$AMBIENT
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -494,9 +503,14 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   else
      MEMORY_REQUEST_ARG=""
   fi
+  if [ -n "$AMBIENT" ]; then
+     AMBIENT_ARG="-ab true"
+  else
+     AMBIENT_ARG=""
+  fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
   fi
   
   ensureKialiServerReady

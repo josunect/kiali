@@ -26,14 +26,17 @@ install_bookinfo() {
   if [ "${traffic_gen_enabled}" == "true" ]; then
     traffic_gen_arg="-tg"
   fi
-
+  #if [ "${AMBIENT}" == "true" ]; then
+    ambient_args="-ai false -w true"
+  #fi
   "${INSTALL_BOOKINFO_SCRIPT}"             \
     --client-exe "${CLIENT_EXE}"           \
     --istio-dir "${ISTIO_DIR}"             \
     --istio-namespace "${ISTIO_NAMESPACE}" \
     --namespace "${BOOKINFO_NAMESPACE}"    \
     --minikube-profile "${profile}"        \
-    ${traffic_gen_arg}
+    ${traffic_gen_arg}                     \
+    ${ambient_args}
 
   if [ "$?" != "0" ]; then
     echo "Failed to install bookinfo"
