@@ -600,7 +600,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
      MEMORY_REQUEST_ARG=""
   fi
   if [ -n "$AMBIENT" ]; then
-     AMBIENT_ARG="-ab true"
+     AMBIENT_ARG="--ambient true"
   else
      AMBIENT_ARG=""
   fi
