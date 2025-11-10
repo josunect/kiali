@@ -6,7 +6,7 @@ describe('ControlPlaneBadge', () => {
   it('does not show istio status for remote clusters', () => {
     const wrapper = shallow(
       <MemoryRouter>
-        <ControlPlaneBadge />
+        <ControlPlaneBadge isAmbient={false} />
       </MemoryRouter>
     );
 

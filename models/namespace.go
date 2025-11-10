@@ -79,6 +79,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
 	namespace.Annotations = ns.Annotations
+	namespace.IsAmbient = false // Initialize to false explicitly
 
 	if ns.Labels != nil {
 		// Injection label takes precedence.
@@ -90,10 +91,11 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 		} else if label, hasLabel := ns.Labels[config.IstioRevisionLabel]; hasLabel {
 			namespace.Revision = label
 		}
-	}
 
-	if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
-		namespace.IsAmbient = true
+		// Check for ambient label
+		if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
+			namespace.IsAmbient = true
+		}
 	}
 	return namespace
 }

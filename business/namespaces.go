@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -204,9 +206,28 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		cpnSet[n] = struct{}{}
 	}
 
+	// Get ztunnel daemonsets once for efficiency (only needed for control plane namespaces)
+	var ztunnelDaemonSets []apps_v1.DaemonSet
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err == nil {
+		daemonSetList := &apps_v1.DaemonSetList{}
+		selector := map[string]string{
+			config.KubernetesAppLabel: config.Ztunnel,
+		}
+		listOpts := []ctrlclient.ListOption{ctrlclient.MatchingLabels(selector)}
+		if err := kubeCache.List(ctx, daemonSetList, listOpts...); err == nil {
+			ztunnelDaemonSets = daemonSetList.Items
+		}
+	}
+
 	for i := range namespaces {
 		_, ok := cpnSet[namespaces[i].Name]
 		namespaces[i].IsControlPlane = ok
+
+		// Only check for control plane namespaces
+		if ok {
+			in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+		}
 	}
 
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
@@ -273,6 +294,33 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return nil, err
 	}
 	result := models.CastNamespace(*ns, cluster)
+
+	// Only mark control plane namespace as ambient if it has ztunnel enabled in the same cluster
+	// Check if this is a control plane namespace
+	isControlPlane := false
+	for _, cpns := range in.discovery.GetControlPlaneNamespaces(ctx, cluster) {
+		if cpns == result.Name {
+			isControlPlane = true
+			break
+		}
+	}
+
+	if isControlPlane {
+		// Get ztunnel daemonsets for this cluster
+		var ztunnelDaemonSets []apps_v1.DaemonSet
+		kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+		if err == nil {
+			daemonSetList := &apps_v1.DaemonSetList{}
+			selector := map[string]string{
+				config.KubernetesAppLabel: config.Ztunnel,
+			}
+			listOpts := []ctrlclient.ListOption{ctrlclient.MatchingLabels(selector)}
+			if err := kubeCache.List(ctx, daemonSetList, listOpts...); err == nil {
+				ztunnelDaemonSets = daemonSetList.Items
+			}
+		}
+		in.validateControlPlaneNamespaceAmbient(ctx, &result, cluster, ztunnelDaemonSets)
+	}
 
 	if !in.isAccessibleNamespace(ctx, result) {
 		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
@@ -365,6 +413,43 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 
 	// Return the list of namespaces where the user has the 'get namespace' read privilege.
 	return namespaces, nil
+}
+
+// validateControlPlaneNamespaceAmbient validates if a control plane namespace should be marked as ambient
+// by checking if there's a ztunnel daemonset with the same revision in the same cluster.
+// It modifies the namespace's IsAmbient field if validation fails.
+func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
+	// Get the revision that manages this namespace
+	nsRevision := istio.GetRevision(*ns)
+	if nsRevision == "" {
+		// No revision means namespace is not in the mesh
+		ns.IsAmbient = false
+		return
+	}
+
+	if cluster != ns.Cluster {
+		ns.IsAmbient = false
+		return
+	}
+	// Check if there's a ztunnel daemonset in the same cluster with matching revision
+	hasZtunnelWithRevision := false
+	for _, ds := range ztunnelDaemonSets {
+		// Check if the ztunnel daemonset has the same revision as the namespace
+		ztunnelRev := ds.Labels[config.IstioRevisionLabel]
+		if ztunnelRev == "" {
+			// If no revision label, it's the default revision
+			ztunnelRev = models.DefaultRevisionLabel
+		}
+		if ztunnelRev == nsRevision {
+			hasZtunnelWithRevision = true
+			break
+		}
+	}
+
+	// Only mark as ambient if there's a ztunnel daemonset with matching revision
+	if !hasZtunnelWithRevision {
+		ns.IsAmbient = false
+	}
 }
 
 // isAccessibleNamespace will look at the discovery selectors and see if the namespace is allowed to be accessed.

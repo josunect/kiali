@@ -9,6 +9,7 @@ AMBIENT=""
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 BOOKINFO_ONLY="false"
+CLUSTER2_AMBIENT="true"
 CLUSTER_TYPE="kind"
 FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
@@ -39,6 +40,14 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -am|--ambient)
       AMBIENT="${2}"
+      shift;shift
+      ;;
+    -c2a|--cluster2-ambient)
+      CLUSTER2_AMBIENT="${2}"
+      if [ "${CLUSTER2_AMBIENT}" != "true" -a "${CLUSTER2_AMBIENT}" != "false" ]; then
+        echo "--cluster2-ambient option must be one of 'true' or 'false'"
+        exit 1
+      fi
       shift;shift
       ;;
     -bo|--bookinfo-only)
@@ -119,6 +128,10 @@ Valid command line arguments:
   -am|--ambient <true|false>
     If true, install istio ambient profile. Just valid for multi primary suite (alpha).
     Default: false
+  -c2a|--cluster2-ambient <true|false>
+    If true, install istio ambient profile on cluster 2 (west). Only valid when --ambient is true.
+    If false, cluster 2 will use regular Istio while cluster 1 uses ambient.
+    Default: true (both clusters use ambient when --ambient is true)
   -bo|--bookinfo-only <true|false>
     If true, only install bookinfo demo instead of all demos.
     Default: false
@@ -181,6 +194,7 @@ cat <<EOM
 === SETTINGS ===
 AMBIENT=$AMBIENT
 BOOKINFO_ONLY=$BOOKINFO_ONLY
+CLUSTER2_AMBIENT=$CLUSTER2_AMBIENT
 CLUSTER_TYPE=$CLUSTER_TYPE
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
@@ -605,9 +619,14 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   else
      AMBIENT_ARG=""
   fi
+  if [ -n "$AMBIENT" ] && [ "$CLUSTER2_AMBIENT" == "false" ]; then
+     CLUSTER2_AMBIENT_ARG="--cluster2-ambient false"
+  else
+     CLUSTER2_AMBIENT_ARG=""
+  fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG
   fi
 
   ensureKialiServerReady
