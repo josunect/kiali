@@ -423,8 +423,7 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 	nsRevision := istio.GetRevision(*ns)
 	if nsRevision == "" {
 		// No revision means namespace is not in the mesh
-		ns.IsAmbient = false
-		return
+		nsRevision = models.DefaultRevisionLabel
 	}
 
 	if cluster != ns.Cluster {
@@ -442,6 +441,7 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 		}
 		if ztunnelRev == nsRevision {
 			hasZtunnelWithRevision = true
+			ns.IsAmbient = true
 			break
 		}
 	}
