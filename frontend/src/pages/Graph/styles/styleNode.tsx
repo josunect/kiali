@@ -14,8 +14,9 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TriangleSharp } from '../../Graph/elements/triangle';
-import { PlateSharp } from '../../Graph/elements/plate';
+import { Triangle, TriangleSharp } from '../../Graph/elements/triangle';
+import { Plate, PlateSharp } from '../../Graph/elements/plate';
+import { RectSharp } from '../elements/RectSharp';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -63,17 +64,6 @@ const renderIcon = (element: Node): React.ReactNode => {
   );
 };
 
-const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
-  switch (node.getNodeShape()) {
-    case NodeShape.rhombus:
-      return TriangleSharp;
-    case NodeShape.trapezoid:
-      return PlateSharp;
-    default:
-      return getShapeComponent(node);
-  }
-};
-
 const nodeStyle = kialiStyle({
   $nest: {
     '&.pf-m-hover': {
@@ -98,7 +88,6 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
-  const ShapeComponent = getNodeShape(element);
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
@@ -137,6 +126,22 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     data.onHover?.(element, false);
   };
 
+  const getCustomNodeShape = React.useCallback(
+    (node: Node): React.FunctionComponent<ShapeProps> => {
+      switch (node.getNodeShape()) {
+        case NodeShape.rect:
+          return RectSharp;
+        case NodeShape.rhombus:
+          return detailsLevel === ScaleDetailsLevel.high ? Triangle : TriangleSharp;
+        case NodeShape.trapezoid:
+          return detailsLevel === ScaleDetailsLevel.high ? Plate : PlateSharp;
+        default:
+          return getShapeComponent(node);
+      }
+    },
+    [detailsLevel]
+  );
+
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     if (detailsLevel !== ScaleDetailsLevel.high) {
@@ -151,6 +156,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   }, [data, detailsLevel]);
 
   const { width, height } = element.getDimensions();
+  const ShapeComponent = getCustomNodeShape(element);
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
@@ -166,7 +172,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        getCustomShape={getNodeShape}
+        getCustomShape={getCustomNodeShape}
         scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
         scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
