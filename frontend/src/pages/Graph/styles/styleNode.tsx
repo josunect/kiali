@@ -17,6 +17,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Triangle, TriangleSharp } from '../../Graph/elements/triangle';
 import { Plate, PlateSharp } from '../../Graph/elements/plate';
 import { RectSharp } from '../elements/RectSharp';
+import { graphIsReady } from '../Graph';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -132,9 +133,9 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         case NodeShape.rect:
           return RectSharp;
         case NodeShape.rhombus:
-          return detailsLevel === ScaleDetailsLevel.high ? Triangle : TriangleSharp;
+          return graphIsReady() && detailsLevel === ScaleDetailsLevel.high ? Triangle : TriangleSharp;
         case NodeShape.trapezoid:
-          return detailsLevel === ScaleDetailsLevel.high ? Plate : PlateSharp;
+          return graphIsReady() && detailsLevel === ScaleDetailsLevel.high ? Plate : PlateSharp;
         default:
           return getShapeComponent(node);
       }
