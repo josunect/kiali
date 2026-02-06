@@ -1,5 +1,4 @@
 @overview
-@selected
 Feature: New Overview - Overview cards
 
   Background:
@@ -41,4 +40,39 @@ Feature: New Overview - Overview cards
     When user opens the Control planes issues popover
     And user clicks the "istiod-kubernetes" control plane link in the popover
     Then user is redirected to Mesh page with cluster filter "Kubernetes"
+
+  @core-2
+  Scenario: Service insights card shows loading state without tables or footer link
+    Given Service insights APIs respond slowly
+    And user is at the "overview" page
+    Then Service insights card shows loading state without tables or footer link
+
+  @core-2
+  Scenario: Service insights card shows error state without tables or footer link
+    Given Service insights APIs fail
+    And user is at the "overview" page
+    Then Service insights card shows error state without tables or footer link
+
+  @core-2
+  Scenario: Service insights card can retry after error
+    Given Service insights APIs fail
+    And user is at the "overview" page
+    Then Service insights card shows error state without tables or footer link
+    When Service insights APIs succeed with data
+    And user clicks Try Again in Service insights card
+    Then Service insights card shows data tables and footer link
+
+  @core-2
+  Scenario: Service insights footer link navigates to Services list with all namespaces and sort
+    Given Service insights APIs succeed with no data
+    And user is at the "overview" page
+    When user clicks View all services in Service insights card
+    Then user is redirected to Services list with all namespaces and service insights sorting
+
+  @core-2
+  Scenario: Service insights service link navigates to service details with cluster parameter
+    Given Service insights APIs succeed with data
+    And user is at the "overview" page
+    When user clicks the "svc-a" service link in Service insights card
+    Then user is redirected to Service details for namespace "alpha" service "svc-a" in cluster "Kubernetes"
 
