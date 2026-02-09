@@ -283,7 +283,7 @@ Then('Service insights card shows data tables and footer link', () => {
       }
 
       cy.contains('th', 'Name').should('be.visible');
-      cy.contains('th', 'Error rate').should('be.visible');
+      cy.contains('th', 'Errors').should('be.visible');
 
       cy.get('tbody tr').then($rows => {
         if ($rows.length === 0) {
@@ -308,7 +308,7 @@ Then('Service insights card shows data tables and footer link', () => {
       }
 
       cy.contains('th', 'Name').should('be.visible');
-      cy.contains('th', 'P95 latency').should('be.visible');
+      cy.contains('th', 'Latency').should('be.visible');
 
       cy.get('tbody tr').then($rows => {
         if ($rows.length === 0) {
