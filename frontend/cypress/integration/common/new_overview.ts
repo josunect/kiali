@@ -151,33 +151,25 @@ When('user clicks Try Again in Control planes card', () => {
 Then('Control planes card shows count and footer link', () => {
   getControlPlanesCard().within(() => {
     cy.contains('Control planes (').should('be.visible');
-    cy.contains('a', 'View Control planes').should('be.visible');
+    cy.getBySel('control-planes-view-namespaces').should('be.visible');
   });
 });
 
-When('user navigates to Mesh page from Control planes card', () => {
+When('user navigates to Namespaces page from Control planes card', () => {
   cy.wait('@controlPlanes');
 
-  cy.get('body').then($body => {
-    if ($body.find('[data-test="control-planes-issues"]').length > 0) {
-      cy.getBySel('control-planes-issues').should('be.visible').click();
-      cy.get('[role="dialog"] a')
-        .first()
-        .should('have.attr', 'href')
-        .and('match', /\/mesh\?meshHide=cluster!=.+/)
-        .click();
-      return;
-    }
-
-    // If there are no unhealthy control planes, validate navigation via the footer link.
-    getControlPlanesCard().within(() => {
-      cy.contains('a', 'View Control planes').should('be.visible').click();
-    });
+  // Navigation should always be via the footer link (Namespaces with type filter).
+  getControlPlanesCard().within(() => {
+    cy.getBySel('control-planes-view-namespaces').should('be.visible').click();
   });
 });
 
-Then('user is redirected to Mesh page', () => {
-  cy.location('pathname').should('match', /\/(console|ossmconsole)\/mesh$/);
+Then('user is redirected to Namespaces page with control-plane type filter', () => {
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/namespaces$/);
+  cy.location('search').then(search => {
+    const params = new URLSearchParams(search);
+    expect(params.get('type')).to.eq('Control plane');
+  });
 });
 
 Given('Service insights APIs are observed', () => {
