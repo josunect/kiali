@@ -43,6 +43,8 @@ Feature: New Overview - Overview cards
     Given user is at the "overview" page
     When user clicks View Data planes in Data planes card
     Then user is redirected to Namespaces page with data-plane type filter
+  
+  @core-2
   Scenario: Service insights card shows loading state without tables or footer link
     Given Service insights APIs respond slowly
     And user is at the "overview" page
@@ -75,4 +77,10 @@ Feature: New Overview - Overview cards
     And user is at the "overview" page
     When user clicks a valid service link in Service insights card
     Then user is redirected to that Service details page
+
+  @core-2
+  Scenario: Service insights card shows mock rate table
+    Given Service insights mock APIs are observed
+    And user is at the "overview" page
+    Then Service insights card shows mock data tables
 
