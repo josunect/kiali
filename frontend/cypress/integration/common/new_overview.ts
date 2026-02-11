@@ -269,11 +269,11 @@ Then('Service insights card shows data tables and footer link', () => {
     cy.getBySel('service-insights-view-all-services').should('be.visible');
   });
 
-  // Rates section: either a table with headers/rows or an explicit "No data" message.
+  // Rates section: either a table with headers/rows or an explicit "not available" message.
   cy.getBySel('service-insights-rates').within(() => {
     cy.get('table').then($table => {
       if ($table.length === 0) {
-        cy.contains('No data').should('be.visible');
+        cy.contains('not available').should('be.visible');
         return;
       }
 
@@ -294,11 +294,11 @@ Then('Service insights card shows data tables and footer link', () => {
     });
   });
 
-  // Latencies section: either a table with headers/rows or an explicit "No data" message.
+  // Latencies section: either a table with headers/rows or an explicit "not available" message.
   cy.getBySel('service-insights-latencies').within(() => {
     cy.get('table').then($table => {
       if ($table.length === 0) {
-        cy.contains('No data').should('be.visible');
+        cy.contains('not available').should('be.visible');
         return;
       }
 
@@ -370,7 +370,7 @@ When('user clicks a valid service link in Service insights card', () => {
         $card.find('[data-test="service-insights-rates"] a').length > 0 ||
         $card.find('[data-test="service-insights-latencies"] a').length > 0;
 
-      const hasEmptyState = $card.text().includes('No data');
+      const hasEmptyState = $card.text().includes('not available');
 
       expect(
         hasServiceLink || hasEmptyState,
@@ -385,7 +385,7 @@ When('user clicks a valid service link in Service insights card', () => {
       if (!hasServiceLink) {
         // Nothing to click in real data; assert the empty state and exit.
         getServiceInsightsCard().within(() => {
-          cy.contains('No data').should('be.visible');
+          cy.contains('not available').should('be.visible');
         });
         return;
       }
@@ -450,7 +450,7 @@ When('user clicks a valid service link in Service insights card', () => {
 
 Then('user is redirected to that Service details page', () => {
   if (!lastClickedServiceInsightsHref) {
-    // No data case: the previous step already asserted "No data".
+    // not available case: the previous step already asserted "not available".
     return;
   }
 
