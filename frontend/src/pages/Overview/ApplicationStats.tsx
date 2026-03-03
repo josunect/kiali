@@ -4,7 +4,7 @@ import { ChartDonut } from '@patternfly/react-charts/victory';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
@@ -52,8 +52,10 @@ const emptyStateStyle = kialiStyle({
 });
 
 export const ApplicationStats: React.FC = () => {
+  const { t } = useKialiTranslation();
   const { apps, isError, isLoading, metrics, retry } = useApplications();
   const allNamespaces = useKialiSelector(namespaceItemsSelector);
+  const noTrafficCount = Number(metrics.no_traffic ?? 0);
 
   const total = apps.length;
   let healthy = 0;
@@ -146,14 +148,14 @@ export const ApplicationStats: React.FC = () => {
         <CardBody style={{ display: 'flex', marginTop: '1rem' }} data-test="apps-card-rates">
           <Flex style={{ marginLeft: '1.2rem', fontSize: '1rem' }}>
             <FlexItem>
-              <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
+              <ResourcesFullIcon /> {t('Inbound {{rps}} RPS', { rps: metrics.rpsIn })}
               <br />
-              <span
-                style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}
-              >{`${metrics.no_traffic} apps with no traffic`}</span>
+              <span style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}>
+                {t('{{count}} app with no traffic', { count: noTrafficCount })}
+              </span>
             </FlexItem>
             <FlexItem style={{ marginLeft: '1.2rem' }}>
-              <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
+              <ResourcesFullIcon /> {t('Outbound {{rps}} RPS', { rps: metrics.rpsOut })}
             </FlexItem>
           </Flex>
         </CardBody>

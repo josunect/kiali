@@ -44,7 +44,7 @@ export const ControlPlaneStats: React.FC = () => {
             <PFBadge badge={PFBadges.Istio} size="sm" />
             <Link to={buildMeshUrlWithClusterFilter(cp.cluster.name)}>{cp.istiodName}</Link>
           </span>
-          <span className={popoverItemStatusStyle}>{cp.status}</span>
+          <span className={popoverItemStatusStyle}>{t(cp.status ?? 'Unknown')}</span>
         </div>
       ))}
     </>
