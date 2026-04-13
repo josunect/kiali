@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
@@ -347,7 +349,20 @@ func getServiceList(cluster, namespace string, gi *GlobalInfo) *models.ServiceLi
 		IncludeOnlyDefinitions: true,
 	}
 	serviceList, err := gi.Business.Svc.GetServiceList(context.TODO(), criteria)
-	graph.CheckError(err)
+
+	// Handle namespace deletion gracefully: if namespace was deleted during graph refresh,
+	// return empty list instead of panicking. Only panic on real API errors.
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			// Namespace was deleted, don't cache this error state
+			delete(gi.Vendor.ServiceLists, key)
+			graph.Error(fmt.Sprintf("Namespace %s not found in cluster %s: %s", namespace, cluster, err.Error()))
+			return &models.ServiceList{Services: []models.ServiceOverview{}}
+		}
+		// Real error (e.g., API server down), panic as before
+		graph.CheckError(err)
+	}
+
 	gi.Vendor.ServiceLists[key] = serviceList
 
 	return serviceList
@@ -400,7 +415,20 @@ func getWorkloadList(cluster, namespace string, gi *GlobalInfo) *models.Workload
 
 	criteria := business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
-	graph.CheckError(err)
+
+	// Handle namespace deletion gracefully: if namespace was deleted during graph refresh,
+	// return empty list instead of panicking. Only panic on real API errors.
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			// Namespace was deleted, don't cache this error state
+			delete(gi.Vendor.WorkloadLists, key)
+			graph.Error(fmt.Sprintf("Namespace %s not found in cluster %s: %s", namespace, cluster, err.Error()))
+			return &models.WorkloadList{Workloads: []models.WorkloadListItem{}}
+		}
+		// Real error (e.g., API server down), panic as before
+		graph.CheckError(err)
+	}
+
 	gi.Vendor.WorkloadLists[key] = &workloadList
 
 	return &workloadList
