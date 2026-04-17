@@ -40,7 +40,7 @@ const waitForAppHealthStatus = (
   const checkHealth = (): Cypress.Chainable => {
     return cy
       .request({
-        url: `api/namespaces/${namespace}/apps/${app}/health`,
+        url: `api/namespaces/${namespace}/apps/${app}?health=true`,
         failOnStatusCode: false
       })
       .then(response => {
@@ -54,7 +54,7 @@ const waitForAppHealthStatus = (
           }
         }
 
-        const actualStatus = response.body?.status?.status;
+        const actualStatus = response.body?.health?.status?.status;
         cy.log(`App ${app} health status: ${actualStatus} (expecting ${expectedStatus})`);
 
         if (actualStatus === expectedStatus) {
