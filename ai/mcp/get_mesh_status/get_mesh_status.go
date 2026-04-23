@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes"
@@ -19,6 +21,17 @@ import (
 
 func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	ctx := ki.Request.Context()
+
+	namespaces, nsErr := ki.BusinessLayer.Namespace.GetNamespaces(ctx)
+	if nsErr != nil {
+		if business.IsAccessibleError(nsErr) || k8serrors.IsForbidden(nsErr) || k8serrors.IsUnauthorized(nsErr) {
+			return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusOK
+		}
+		return fmt.Sprintf("failed to validate token access for mesh status: %v", nsErr), http.StatusOK
+	}
+	if len(namespaces) == 0 {
+		return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusOK
+	}
 
 	meshReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "/ai/mesh-status", nil)
 	meshOpts := mesh.NewOptions(meshReq, &ki.BusinessLayer.Namespace)
@@ -37,9 +50,16 @@ func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface
 	}
 
 	summary := transformToSummary(meshConfig)
+	if !hasAccessibleControlPlane(summary) {
+		return "No accessible control plane data found for this token. Cannot retrieve mesh status.", http.StatusOK
+	}
 	enrichNamespaceHealth(ctx, ki.BusinessLayer, summary.Components.DataPlane.MonitoredNamespaces)
 
 	return summary, http.StatusOK
+}
+
+func hasAccessibleControlPlane(summary MeshSummaryFormatted) bool {
+	return len(summary.Components.ControlPlane.Nodes) > 0
 }
 
 func transformToSummary(cfg meshCommon.Config) MeshSummaryFormatted {

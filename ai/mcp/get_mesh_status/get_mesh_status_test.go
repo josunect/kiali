@@ -88,6 +88,26 @@ func TestTransformToSummary_ControlPlane(t *testing.T) {
 	assert.Equal(t, kubernetes.ComponentHealthy, node.Status)
 }
 
+func TestHasAccessibleControlPlane_TrueWithIstiodNode(t *testing.T) {
+	summary := transformToSummary(sampleMeshConfig())
+	assert.True(t, hasAccessibleControlPlane(summary))
+}
+
+func TestHasAccessibleControlPlane_FalseWithoutControlPlaneNodes(t *testing.T) {
+	cfg := meshCommon.Config{
+		Elements: meshCommon.Elements{
+			Nodes: []*meshCommon.NodeWrapper{
+				makeNode("n-kiali", mesh.InfraTypeKiali, "kiali", "cluster-1", "istio-system", "v2.22.0", kubernetes.ComponentHealthy, nil),
+				makeNode("n-prom", mesh.InfraTypeMetricStore, "Prometheus", "_external_", "", "3.5.0", kubernetes.ComponentHealthy, nil),
+			},
+		},
+		Timestamp: time.Now().Unix(),
+	}
+	summary := transformToSummary(cfg)
+	assert.False(t, hasAccessibleControlPlane(summary))
+	assert.Equal(t, "UNKNOWN", summary.Components.ControlPlane.Status)
+}
+
 func TestTransformToSummary_ObservabilityStack(t *testing.T) {
 	summary := transformToSummary(sampleMeshConfig())
 

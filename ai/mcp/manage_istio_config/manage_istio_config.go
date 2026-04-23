@@ -26,6 +26,8 @@ import (
 // them to the user instead of the execution framework treating them as fatal.
 func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	action := mcputil.GetStringArg(args, "action")
+	namespace := mcputil.GetStringArg(args, "namespace")
+	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 	if err := validateReadOnlyIstioConfigInput(args); err != nil {
 		return err.Error(), http.StatusOK
 	}
@@ -43,10 +45,13 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 	}
 
 	if action == "get" {
-		namespace := mcputil.GetStringArg(args, "namespace")
-		clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 		if msg, code := checkNamespaceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, clusterName); code != 0 {
-			return msg, http.StatusOK
+			return msg, code
+		}
+	}
+	if action == "list" && namespace != "" {
+		if msg, code := checkNamespaceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, clusterName); code != 0 {
+			return msg, code
 		}
 	}
 

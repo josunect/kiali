@@ -50,6 +50,9 @@ func Execute(
 	if code != http.StatusOK {
 		return errMsg, code
 	}
+	if errMsg := mcputil.ValidateNamespaceAccess(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, parsed.Namespace, parsed.ClusterName); errMsg != "" {
+		return errMsg + " Cannot retrieve logs.", http.StatusOK
+	}
 
 	log.Debugf("[Chat AI][get_logs] ns=%s requested=%s workload=%s pod=%s container=%s tail=%d severity=%v previous=%t cluster=%s",
 		parsed.Namespace, parsed.Requested, parsed.Workload, parsed.Pod, parsed.Container, parsed.TailLines, parsed.Severities, parsed.Previous, parsed.ClusterName)

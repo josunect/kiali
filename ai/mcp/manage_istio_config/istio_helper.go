@@ -10,6 +10,7 @@ import (
 	api_errors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -30,10 +31,11 @@ func audit(r *http.Request, operation, namespace, gvk, message string) {
 
 // checkNamespaceExists verifies that the target namespace exists in the cluster.
 // Returns a user-friendly (message, status) tuple if the namespace is missing,
-// or ("", 0) when it exists.
+// or ("", 0) when it exists. Always returns http.StatusOK for errors to match
+// MCP pattern of treating errors as user-facing messages.
 func checkNamespaceExists(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (string, int) {
-	if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		return fmt.Sprintf("Namespace %q does not exist in cluster %q", namespace, cluster), http.StatusNotFound
+	if errMsg := mcputil.ValidateNamespaceAccess(ctx, businessLayer, namespace, cluster); errMsg != "" {
+		return errMsg, http.StatusOK
 	}
 	return "", 0
 }

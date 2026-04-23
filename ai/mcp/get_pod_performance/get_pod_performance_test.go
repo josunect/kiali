@@ -649,7 +649,7 @@ func TestExecute_NamespaceDoesNotExist_ReturnsOKWithFriendlyMessage(t *testing.T
 	require.Equal(t, http.StatusOK, code, "chatbot tools should return 200 with friendly messages, not 404")
 	msg := res.(string)
 	assert.Contains(t, msg, "nonexistent-namespace")
-	assert.Contains(t, msg, "does not exist")
+	assert.Contains(t, msg, "does not exist or is not accessible")
 }
 
 func TestExecute_NamespaceDoesNotExist_WithWorkloadName_ReturnsOKWithFriendlyMessage(t *testing.T) {
@@ -670,7 +670,7 @@ func TestExecute_NamespaceDoesNotExist_WithWorkloadName_ReturnsOKWithFriendlyMes
 	require.Equal(t, http.StatusOK, code, "chatbot tools should return 200 with friendly messages, not 404")
 	msg := res.(string)
 	assert.Contains(t, msg, "nonexistent-namespace")
-	assert.Contains(t, msg, "does not exist")
+	assert.Contains(t, msg, "does not exist or is not accessible")
 }
 
 func TestExecute_NamespaceExists_DoesNotBlockExecution(t *testing.T) {

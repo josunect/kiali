@@ -1,6 +1,7 @@
 package mcputil
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -84,6 +85,16 @@ func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.Istio
 	q.RequestProtocol = GetStringOrDefault(args, DefaultRequestProtocol, "requestProtocol")
 
 	return extractBaseMetricsQueryParams(args, &q.RangeQuery, namespaceInfo)
+}
+
+// ValidateNamespaceAccess checks that the given namespace exists and is accessible.
+// Returns an error message string if the namespace is not accessible, or empty string if it is.
+// This is designed for MCP tools that return errors as user-facing messages with HTTP 200.
+func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) string {
+	if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		return fmt.Sprintf("Namespace %q does not exist or is not accessible in cluster %q.", namespace, cluster)
+	}
+	return ""
 }
 
 func extractBaseMetricsQueryParams(args map[string]interface{}, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {
