@@ -59,6 +59,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	// Parse namespaces argument (comma-separated string)
 	namespaces := make([]string, 0)
 	var invalidAccess []string
+	invalidStatusCode := http.StatusNotFound
 	seen := map[string]struct{}{}
 
 	namespacesArg := mcputil.GetStringArg(args, "namespaces")
@@ -76,16 +77,21 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			seen[ns_trimmed] = struct{}{}
 
 			// Validate access to this namespace
-			_, err := mcputil.CheckNamespaceAccess(kialiInterface.Request, kialiInterface.Conf, kialiInterface.KialiCache, kialiInterface.Discovery, kialiInterface.ClientFactory, ns_trimmed, toolArgs.ClusterName)
-			if err != nil {
+			if _, statusCode := mcputil.ValidateNamespaceAccess(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, ns_trimmed, toolArgs.ClusterName); statusCode != http.StatusOK {
 				invalidAccess = append(invalidAccess, ns_trimmed)
+				// Prefer the most severe status among invalid namespaces.
+				// 500 > 403 > 404.
+				if statusCode == http.StatusInternalServerError ||
+					(statusCode == http.StatusForbidden && invalidStatusCode != http.StatusInternalServerError) {
+					invalidStatusCode = statusCode
+				}
 				continue
 			}
 			namespaces = append(namespaces, ns_trimmed)
 		}
 
 		if len(namespaces) == 0 && len(invalidAccess) > 0 {
-			return fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve traffic graph.", strings.Join(invalidAccess, ", ")), http.StatusOK
+			return fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve traffic graph.", strings.Join(invalidAccess, ", ")), invalidStatusCode
 		}
 	}
 
