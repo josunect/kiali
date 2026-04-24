@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -88,13 +89,19 @@ func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.Istio
 }
 
 // ValidateNamespaceAccess checks that the given namespace exists and is accessible.
-// Returns an error message string if the namespace is not accessible, or empty string if it is.
-// This is designed for MCP tools that return errors as user-facing messages with HTTP 200.
-func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) string {
+// It returns an error message plus the HTTP status to be propagated by the tool.
+func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (string, int) {
 	if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		return fmt.Sprintf("Namespace %q does not exist or is not accessible in cluster %q.", namespace, cluster)
+		switch {
+		case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+			return fmt.Sprintf("Namespace %q is not accessible in cluster %q.", namespace, cluster), http.StatusForbidden
+		case k8serrors.IsNotFound(err):
+			return fmt.Sprintf("Namespace %q does not exist in cluster %q.", namespace, cluster), http.StatusNotFound
+		default:
+			return fmt.Sprintf("failed to validate namespace %q in cluster %q: %v", namespace, cluster, err), http.StatusInternalServerError
+		}
 	}
-	return ""
+	return "", http.StatusOK
 }
 
 func extractBaseMetricsQueryParams(args map[string]interface{}, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {

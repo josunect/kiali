@@ -26,8 +26,8 @@ func Execute(
 		return "namespace and serviceName are required", http.StatusBadRequest
 	}
 
-	if errMsg := mcputil.ValidateNamespaceAccess(ctx, kialiInterface.BusinessLayer, parsed.Namespace, parsed.ClusterName); errMsg != "" {
-		return errMsg + fmt.Sprintf(" Cannot retrieve traces for service %q.", parsed.ServiceName), http.StatusOK
+	if nsErrMsg, nsCode := mcputil.ValidateNamespaceAccess(ctx, kialiInterface.BusinessLayer, parsed.Namespace, parsed.ClusterName); nsErrMsg != "" {
+		return nsErrMsg + fmt.Sprintf(" Cannot retrieve traces for service %q.", parsed.ServiceName), nsCode
 	}
 
 	conf := kialiInterface.Conf

@@ -30,12 +30,11 @@ func audit(r *http.Request, operation, namespace, gvk, message string) {
 }
 
 // checkNamespaceExists verifies that the target namespace exists in the cluster.
-// Returns a user-friendly (message, status) tuple if the namespace is missing,
-// or ("", 0) when it exists. Always returns http.StatusOK for errors to match
-// MCP pattern of treating errors as user-facing messages.
+// Returns a user-friendly (message, status) tuple if the namespace is missing
+// or inaccessible, or ("", 0) when it exists and is accessible.
 func checkNamespaceExists(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (string, int) {
-	if errMsg := mcputil.ValidateNamespaceAccess(ctx, businessLayer, namespace, cluster); errMsg != "" {
-		return errMsg, http.StatusOK
+	if errMsg, code := mcputil.ValidateNamespaceAccess(ctx, businessLayer, namespace, cluster); errMsg != "" {
+		return errMsg, code
 	}
 	return "", 0
 }

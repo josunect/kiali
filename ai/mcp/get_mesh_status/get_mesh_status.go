@@ -25,12 +25,12 @@ func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface
 	namespaces, nsErr := ki.BusinessLayer.Namespace.GetNamespaces(ctx)
 	if nsErr != nil {
 		if business.IsAccessibleError(nsErr) || k8serrors.IsForbidden(nsErr) || k8serrors.IsUnauthorized(nsErr) {
-			return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusOK
+			return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusForbidden
 		}
-		return fmt.Sprintf("failed to validate token access for mesh status: %v", nsErr), http.StatusOK
+		return fmt.Sprintf("failed to validate token access for mesh status: %v", nsErr), http.StatusInternalServerError
 	}
 	if len(namespaces) == 0 {
-		return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusOK
+		return "Token does not have access to any namespace. Cannot retrieve mesh status.", http.StatusForbidden
 	}
 
 	meshReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "/ai/mesh-status", nil)
@@ -51,7 +51,7 @@ func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface
 
 	summary := transformToSummary(meshConfig)
 	if !hasAccessibleControlPlane(summary) {
-		return "No accessible control plane data found for this token. Cannot retrieve mesh status.", http.StatusOK
+		return "No accessible control plane data found for this token. Cannot retrieve mesh status.", http.StatusForbidden
 	}
 	enrichNamespaceHealth(ctx, ki.BusinessLayer, summary.Components.DataPlane.MonitoredNamespaces)
 
