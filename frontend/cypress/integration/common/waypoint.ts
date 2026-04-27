@@ -1,7 +1,8 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading, openTab } from './transition';
+import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
+import { setKialiBooleanConfig, TRACING_USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -142,19 +143,22 @@ const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   );
 };
 
-const waitForWorkloadTracesInApi = (
+type PollWorkloadTracesOptions = {
+  logName?: string;
+  logProgress?: boolean;
+  maxRetries: number;
+  retryCount?: number;
+};
+
+const pollWorkloadTracesInApi = (
   namespace: string,
   workload: string,
-  clusterName?: string,
-  maxRetries = 18,
-  retryCount = 0
-): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, workload=${workload} cluster=${
-        clusterName ?? ''
-      }, baseUrl=${Cypress.config('baseUrl')})`
-    );
+  clusterName: string | undefined,
+  options: PollWorkloadTracesOptions
+): Cypress.Chainable<boolean> => {
+  const retryCount = options.retryCount ?? 0;
+  if (retryCount >= options.maxRetries) {
+    return cy.wrap(false);
   }
 
   const nowMicros = Date.now() * 1000;
@@ -169,32 +173,60 @@ const waitForWorkloadTracesInApi = (
     qs.clusterName = clusterName;
   }
 
-  cy.request({
-    method: 'GET',
-    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
-    qs,
-    failOnStatusCode: false
-  }).then(response => {
-    expect(response.status).to.equal(200);
-    const traces = response.body?.data;
-    if (Array.isArray(traces) && traces.length > 0) {
+  return cy
+    .request({
+      method: 'GET',
+      url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
+      qs,
+      failOnStatusCode: false
+    })
+    .then(response => {
+      expect(response.status).to.equal(200);
+      const traces = response.body?.data;
+      if (Array.isArray(traces) && traces.length > 0) {
+        return cy.wrap(true);
+      }
+
+      if (options.logProgress && (retryCount === 0 || retryCount % 5 === 0)) {
+        Cypress.log({
+          name: options.logName ?? 'waitForWorkloadTraces',
+          message: `retry=${retryCount}/${options.maxRetries} url=${Cypress.config(
+            'baseUrl'
+          )}/api/namespaces/${namespace}/workloads/${workload}/traces clusterName=${clusterName ?? ''} tracesCount=${
+            Array.isArray(traces) ? traces.length : -1
+          } baseUrl=${Cypress.config('baseUrl')}`
+        });
+      }
+
+      return cy.wait(10000).then(() =>
+        pollWorkloadTracesInApi(namespace, workload, clusterName, {
+          ...options,
+          retryCount: retryCount + 1
+        })
+      );
+    });
+};
+
+const waitForWorkloadTracesInApi = (
+  namespace: string,
+  workload: string,
+  clusterName?: string,
+  maxRetries = 18
+): void => {
+  pollWorkloadTracesInApi(namespace, workload, clusterName, {
+    logName: 'waitForWorkloadTraces',
+    logProgress: true,
+    maxRetries
+  }).then(hasTraces => {
+    if (hasTraces) {
       return;
     }
 
-    if (retryCount === 0 || retryCount % 5 === 0) {
-      Cypress.log({
-        name: 'waitForWorkloadTraces',
-        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
-          'baseUrl'
-        )}/api/namespaces/${namespace}/workloads/${workload}/traces clusterName=${clusterName ?? ''} tracesCount=${
-          Array.isArray(traces) ? traces.length : -1
-        } baseUrl=${Cypress.config('baseUrl')}`
-      });
-    }
-
-    return cy
-      .wait(10000)
-      .then(() => waitForWorkloadTracesInApi(namespace, workload, clusterName, maxRetries, retryCount + 1));
+    throw new Error(
+      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, workload=${workload} cluster=${
+        clusterName ?? ''
+      }, baseUrl=${Cypress.config('baseUrl')})`
+    );
   });
 };
 
@@ -292,42 +324,42 @@ const waitForWaypointTracesInApi = (
   namespace: string,
   workload: string,
   clusterName?: string,
-  maxRetries = 10,
-  retryCount = 0
+  maxRetries = 10
 ): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, cluster=${clusterName ?? ''})`
-    );
-  }
-
-  const nowMicros = Date.now() * 1000;
-  const qs: Record<string, any> = {
-    // last 10 minutes (micros)
-    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
-    endMicros: nowMicros,
-    tags: '{}',
-    limit: 100
-  };
-  if (clusterName) {
-    qs.clusterName = clusterName;
-  }
-
-  cy.request({
-    method: 'GET',
-    url: `api/namespaces/${namespace}/workloads/${workload}/traces`,
-    qs,
-    failOnStatusCode: false
-  }).then(response => {
-    expect(response.status).to.equal(200);
-    const traces = response.body?.data;
-    if (Array.isArray(traces) && traces.length > 0) {
+  pollWorkloadTracesInApi(namespace, workload, clusterName, { maxRetries }).then(hasTraces => {
+    if (hasTraces) {
       return;
     }
 
-    return cy
-      .wait(10000)
-      .then(() => waitForWaypointTracesInApi(namespace, workload, clusterName, maxRetries, retryCount + 1));
+    throw new Error(
+      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, cluster=${clusterName ?? ''})`
+    );
+  });
+};
+
+const probeWorkloadTracesInApi = (
+  namespace: string,
+  workload: string,
+  clusterName?: string,
+  maxRetries = 6
+): Cypress.Chainable<boolean> => {
+  return pollWorkloadTracesInApi(namespace, workload, clusterName, { maxRetries });
+};
+
+const ensureWaypointWorkloadTracingLookupReady = (namespace: string, workload: string, clusterName?: string): void => {
+  probeWorkloadTracesInApi(namespace, workload, clusterName).then(hasTraces => {
+    if (hasTraces) {
+      return;
+    }
+
+    Cypress.log({
+      name: 'waypointTracingLookup',
+      message: `No traces found for ${namespace}/${workload} with the default tracing lookup. Enabling external_services.tracing.use_waypoint_name=true`
+    });
+
+    setKialiBooleanConfig(TRACING_USE_WAYPOINT_NAME_CONFIG, true);
+    waitForKialiApiReady();
+    waitForWorkloadTracesInApi(namespace, workload, clusterName);
   });
 };
 
@@ -364,6 +396,13 @@ Then('the graph page has enough data for L7', () => {
 Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
 });
+
+Then(
+  'the waypoint tracing lookup is ready for the {string} workload in the {string} namespace',
+  (workload: string, namespace: string) => {
+    ensureWaypointWorkloadTracingLookupReady(namespace, workload);
+  }
+);
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   // Poll the traces endpoint so downstream assertions on tracing UI don't flake.

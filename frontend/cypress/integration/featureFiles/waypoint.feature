@@ -15,6 +15,7 @@ Feature: Kiali Waypoint related features
   Scenario: [Setup] namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
     And the graph page has enough data
+    And the waypoint tracing lookup is ready for the "ratings-v1" workload in the "bookinfo" namespace
     And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
 
   @skip-ossmc

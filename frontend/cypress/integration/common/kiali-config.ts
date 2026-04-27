@@ -135,28 +135,59 @@ export const restartKiali = (deploymentName: string, namespace: string): void =>
 };
 
 /**
+ * Configuration for setting a boolean Kiali option.
+ */
+export interface KialiBooleanConfig {
+  // The yq path to the config option (e.g., '.external_services.tracing.use_waypoint_name')
+  configPath: string;
+  // The CR spec path for operator installations (e.g., 'external_services.tracing.use_waypoint_name')
+  crSpecPath: string;
+}
+
+/**
  * Configuration for enabling a Kiali feature.
  */
-export interface KialiFeatureConfig {
-  // The yq path to the config option (e.g., '.kiali_internal.graph_cache.enabled')
-  configPath: string;
-  // The CR spec path for operator installations (e.g., 'kiali_internal.graph_cache.enabled')
-  crSpecPath: string;
+export interface KialiFeatureConfig extends KialiBooleanConfig {
   // Cypress env key to store the previous value
   envKeyPrev: string;
 }
 
-/**
- * Enables a Kiali feature by modifying the configuration.
- * Supports both operator (Kiali CR) and Helm (ConfigMap) installations.
- * Stores the previous value in Cypress env for cleanup.
- */
-export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
-  discoverKialiRuntimeInfo().then(info => {
-    Cypress.env('KIALI_CONFIGMAP_NAME', info.configMapName);
-    Cypress.env('KIALI_DEPLOYMENT_NAME', info.deploymentName);
-    Cypress.env('KIALI_DEPLOYMENT_NAMESPACE', info.namespace);
+const buildNestedPatchObject = (path: string, value: unknown): Record<string, unknown> => {
+  const pathParts = path.split('.');
+  let patchObj: unknown = value;
+  for (let i = pathParts.length - 1; i >= 0; i--) {
+    patchObj = { [pathParts[i]]: patchObj };
+  }
+  return patchObj as Record<string, unknown>;
+};
 
+const normalizeBooleanOutput = (rawValue: string): string => {
+  return rawValue.trim() === 'true' ? 'true' : 'false';
+};
+
+const persistKialiRuntimeEnv = (info: KialiRuntimeInfo): void => {
+  Cypress.env('KIALI_CONFIGMAP_NAME', info.configMapName);
+  Cypress.env('KIALI_DEPLOYMENT_NAME', info.deploymentName);
+  Cypress.env('KIALI_DEPLOYMENT_NAMESPACE', info.namespace);
+};
+
+type UpdateKialiBooleanOptions = {
+  envKeyPrev?: string;
+};
+
+/**
+ * Shared helper to set a boolean Kiali option and restart Kiali only when the
+ * value actually changes. Supports both operator (Kiali CR) and Helm
+ * (ConfigMap) installations.
+ */
+const updateKialiBooleanConfig = (
+  config: KialiBooleanConfig,
+  value: boolean,
+  options: UpdateKialiBooleanOptions = {}
+): void => {
+  discoverKialiRuntimeInfo().then(info => {
+    persistKialiRuntimeEnv(info);
+    const desiredValue = value ? 'true' : 'false';
     const doRestart = (): void => {
       restartKiali(info.deploymentName, info.namespace);
     };
@@ -166,59 +197,69 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
       { failOnNonZeroExit: false }
     ).then(result => {
       const primaryResource = result.stdout.trim();
+      Cypress.env('KIALI_PRIMARY_RESOURCE', primaryResource);
 
       if (primaryResource) {
         // Operator installation - patch the Kiali CR
-        const parts = primaryResource.split('/');
-        const crNamespace = parts[0];
-        const crName = parts[1];
-        Cypress.env('KIALI_PRIMARY_RESOURCE', primaryResource);
-
-        // Get current value
-        cy.exec(`kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.${featureConfig.crSpecPath}}"`, {
+        const [crNamespace, crName] = primaryResource.split('/');
+        cy.exec(`kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.${config.crSpecPath}}"`, {
           failOnNonZeroExit: false
         }).then(r => {
-          const prev = r.stdout.trim();
-          Cypress.env(featureConfig.envKeyPrev, prev);
+          if (options.envKeyPrev) {
+            Cypress.env(options.envKeyPrev, r.stdout.trim());
+          }
+          const currentValue = normalizeBooleanOutput(r.stdout);
+          if (currentValue === desiredValue) {
+            return;
+          }
+
+          const patchJson = JSON.stringify({ spec: buildNestedPatchObject(config.crSpecPath, value) });
+          cy.exec(`kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '${patchJson}'`).then(() =>
+            doRestart()
+          );
         });
-
-        // Build the patch JSON dynamically
-        const pathParts = featureConfig.crSpecPath.split('.');
-        let patchObj: Record<string, unknown> = { enabled: true };
-        for (let i = pathParts.length - 2; i >= 0; i--) {
-          patchObj = { [pathParts[i]]: patchObj };
-        }
-        const patchJson = JSON.stringify({ spec: patchObj });
-
-        cy.exec(`kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '${patchJson}'`).then(() =>
-          doRestart()
-        );
-
         return;
       }
 
       // Helm installation - update the ConfigMap
-      Cypress.env('KIALI_PRIMARY_RESOURCE', '');
-
-      // Dump current config.yaml
       cy.exec(
         `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
-      );
+      ).then(() => {
+        cy.exec(`yq '${config.configPath}' /tmp/kiali-config.yaml`, {
+          failOnNonZeroExit: false
+        }).then(r => {
+          if (options.envKeyPrev) {
+            Cypress.env(options.envKeyPrev, r.stdout.trim());
+          }
+          const currentValue = normalizeBooleanOutput(r.stdout);
+          if (currentValue === desiredValue) {
+            return;
+          }
 
-      // Capture previous value (avoid yq's // alternative operator which treats false as falsy)
-      cy.exec(`yq '${featureConfig.configPath}' /tmp/kiali-config.yaml`, {
-        failOnNonZeroExit: false
-      }).then(r => {
-        Cypress.env(featureConfig.envKeyPrev, r.stdout.trim());
+          cy.exec(`yq -i '${config.configPath} = ${desiredValue}' /tmp/kiali-config.yaml`);
+          cy.exec(
+            `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
+          ).then(() => doRestart());
+        });
       });
-
-      // Enable the feature
-      cy.exec(`yq -i '${featureConfig.configPath} = true' /tmp/kiali-config.yaml`);
-      cy.exec(
-        `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
-      ).then(() => doRestart());
     });
   });
+};
+
+/**
+ * Sets a boolean Kiali option and restarts Kiali only when the value actually changes.
+ */
+export const setKialiBooleanConfig = (config: KialiBooleanConfig, value: boolean): void => {
+  updateKialiBooleanConfig(config, value);
+};
+
+/**
+ * Enables a Kiali feature by modifying the configuration.
+ * Supports both operator (Kiali CR) and Helm (ConfigMap) installations.
+ * Stores the previous value in Cypress env for cleanup.
+ */
+export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
+  updateKialiBooleanConfig(featureConfig, true, { envKeyPrev: featureConfig.envKeyPrev });
 };
 
 /**
@@ -292,4 +333,9 @@ export const HEALTH_CACHE_CONFIG: KialiFeatureConfig = {
   configPath: '.kiali_internal.health_cache.enabled',
   crSpecPath: 'kiali_internal.health_cache.enabled',
   envKeyPrev: 'HEALTH_CACHE_PREV'
+};
+
+export const TRACING_USE_WAYPOINT_NAME_CONFIG: KialiBooleanConfig = {
+  configPath: '.external_services.tracing.use_waypoint_name',
+  crSpecPath: 'external_services.tracing.use_waypoint_name'
 };
