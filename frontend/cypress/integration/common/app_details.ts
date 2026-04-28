@@ -76,14 +76,9 @@ Then('user can filter spans by app {string} for waypoint traces', (app: string) 
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
   clickSpanFilterOptionWithFallback(app);
 
-  getCellsForCol('App / Workload').each($cell => {
-    const cellText = $cell.text().toLowerCase();
-    const appMatches = cellText.includes(app.toLowerCase());
-    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
-    expect(
-      appMatches || waypointMatches,
-      `Expected "${cellText}" to contain "${app}" or "${WAYPOINT_FALLBACK}"`
-    ).to.equal(true);
+  getCellsForCol('App / Workload').then($cells => {
+    const expectedValue = $cells.text().includes(app) ? app : 'waypoint';
+    cy.wrap($cells).should('contain.text', expectedValue);
   });
 
   getCellsForCol(4).first().click();

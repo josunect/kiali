@@ -90,6 +90,60 @@ When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('ul[role="menu"]').should('be.visible');
 });
 
+When('user can filter spans by workload {string} for waypoint traces', (workload: string) => {
+  const fallbackWorkload = 'waypoint';
+  const filterInput = 'input[placeholder="Filter by Workload"]';
+
+  const trySelectWorkload = (value: string): Cypress.Chainable<boolean> => {
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get('button#Workload').click();
+    return cy
+      .get(filterInput)
+      .clear()
+      .type(`${value}{enter}`)
+      .then(() => {
+        return cy.get('body').then($body => {
+          const optionSelector = `li[label="${value}"]:visible`;
+          if ($body.find(optionSelector).length === 0) {
+            return false;
+          }
+
+          cy.get(optionSelector).should('be.visible').find('button').click();
+          return true;
+        });
+      });
+  };
+
+  const assertResults = (expectedWorkload: string): void => {
+    getCellsForCol('App / Workload').then($cells => {
+      const text = $cells.text();
+      if (!text.includes(expectedWorkload) && expectedWorkload !== fallbackWorkload) {
+        trySelectWorkload(fallbackWorkload).then(selectedFallback => {
+          expect(selectedFallback, `fallback workload filter ${fallbackWorkload}`).to.equal(true);
+          assertResults(fallbackWorkload);
+        });
+        return;
+      }
+
+      cy.wrap($cells).should('contain.text', expectedWorkload);
+      getCellsForCol(4).first().click();
+      cy.get('ul[role="menu"]').should('be.visible');
+    });
+  };
+
+  trySelectWorkload(workload).then(selectedWorkload => {
+    if (selectedWorkload) {
+      assertResults(workload);
+      return;
+    }
+
+    trySelectWorkload(fallbackWorkload).then(selectedFallback => {
+      expect(selectedFallback, `fallback workload filter ${fallbackWorkload}`).to.equal(true);
+      assertResults(fallbackWorkload);
+    });
+  });
+});
+
 When(
   'the user filters by {string} with value {string} on the {string} tab',
   (filter: string, value: string, tab: string) => {
