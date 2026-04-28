@@ -1,6 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
-import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
+import { clusterParameterExists } from './navigation';
 import { openTab } from './transition';
 
 const WAYPOINT_FALLBACK = 'waypoint';
@@ -71,17 +71,9 @@ When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
   cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
-  clickSpanFilterOptionWithFallback(workload);
-
-  // waypoint is a fallback for istio < 1.29
+  cy.get(`li[label="${workload}"]`).should('be.visible').find('button').click();
   getCellsForCol('App / Workload').each($cell => {
-    const cellText = $cell.text().toLowerCase();
-    const workloadMatches = cellText.includes(workload.toLowerCase());
-    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
-    expect(
-      workloadMatches || waypointMatches,
-      `Expected "${cellText}" to contain "${workload}" or "${WAYPOINT_FALLBACK}"`
-    ).to.equal(true);
+    cy.wrap($cell).contains(workload);
   });
 
   getCellsForCol(4).first().click();
@@ -91,7 +83,7 @@ When('user can filter spans by workload {string}', (workload: string) => {
 });
 
 When('user can filter spans by workload {string} for waypoint traces', (workload: string) => {
-  const fallbackWorkload = 'waypoint';
+  const fallbackWorkload = WAYPOINT_FALLBACK;
   const filterInput = 'input[placeholder="Filter by Workload"]';
 
   const trySelectWorkload = (value: string): Cypress.Chainable<boolean> => {
@@ -114,32 +106,31 @@ When('user can filter spans by workload {string} for waypoint traces', (workload
       });
   };
 
-  const assertResults = (expectedWorkload: string): void => {
-    getCellsForCol('App / Workload').then($cells => {
-      const text = $cells.text();
-      if (!text.includes(expectedWorkload) && expectedWorkload !== fallbackWorkload) {
-        trySelectWorkload(fallbackWorkload).then(selectedFallback => {
-          expect(selectedFallback, `fallback workload filter ${fallbackWorkload}`).to.equal(true);
-          assertResults(fallbackWorkload);
-        });
-        return;
-      }
-
-      cy.wrap($cells).should('contain.text', expectedWorkload);
-      getCellsForCol(4).first().click();
-      cy.get('ul[role="menu"]').should('be.visible');
-    });
-  };
-
   trySelectWorkload(workload).then(selectedWorkload => {
     if (selectedWorkload) {
-      assertResults(workload);
+      getCellsForCol('App / Workload').then($cells => {
+        if ($cells.text().includes(workload)) {
+          cy.wrap($cells).should('contain.text', workload);
+          getCellsForCol(4).first().click();
+          cy.get('ul[role="menu"]').should('be.visible');
+          return;
+        }
+
+        trySelectWorkload(fallbackWorkload).then(selectedFallback => {
+          expect(selectedFallback, `fallback workload filter ${fallbackWorkload}`).to.equal(true);
+          getCellsForCol('App / Workload').should('contain.text', fallbackWorkload);
+          getCellsForCol(4).first().click();
+          cy.get('ul[role="menu"]').should('be.visible');
+        });
+      });
       return;
     }
 
     trySelectWorkload(fallbackWorkload).then(selectedFallback => {
       expect(selectedFallback, `fallback workload filter ${fallbackWorkload}`).to.equal(true);
-      assertResults(fallbackWorkload);
+      getCellsForCol('App / Workload').should('contain.text', fallbackWorkload);
+      getCellsForCol(4).first().click();
+      cy.get('ul[role="menu"]').should('be.visible');
     });
   });
 });

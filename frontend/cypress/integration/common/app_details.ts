@@ -1,7 +1,7 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
-import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
+import { clusterParameterExists } from './navigation';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
@@ -52,16 +52,10 @@ Then('user can filter spans by app {string}', (app: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  clickSpanFilterOptionWithFallback(app);
+  cy.get(`li[label="${app}"]`).should('be.visible').find('button').click();
 
   getCellsForCol('App / Workload').each($cell => {
-    const cellText = $cell.text().toLowerCase();
-    const appMatches = cellText.includes(app.toLowerCase());
-    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
-    expect(
-      appMatches || waypointMatches,
-      `Expected "${cellText}" to contain "${app}" or "${WAYPOINT_FALLBACK}"`
-    ).to.equal(true);
+    cy.wrap($cell).contains(app);
   });
 
   getCellsForCol(4).first().click();
@@ -74,10 +68,19 @@ Then('user can filter spans by app {string} for waypoint traces', (app: string) 
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  clickSpanFilterOptionWithFallback(app);
+  cy.get('body').then($body => {
+    const appSelector = `li[label="${app}"]`;
+    if ($body.find(appSelector).length > 0) {
+      cy.get(appSelector).should('be.visible').find('button').click();
+    } else {
+      cy.get('input[placeholder="Filter by App"]').clear().type(`${WAYPOINT_FALLBACK}{enter}`);
+      cy.get(`li[label="${WAYPOINT_FALLBACK}"]`).should('be.visible').find('button').click();
+    }
+  });
 
   getCellsForCol('App / Workload').then($cells => {
-    const expectedValue = $cells.text().includes(app) ? app : 'waypoint';
+    const cellText = $cells.text().toLowerCase();
+    const expectedValue = cellText.includes(app.toLowerCase()) ? app : WAYPOINT_FALLBACK;
     cy.wrap($cells).should('contain.text', expectedValue);
   });
 
