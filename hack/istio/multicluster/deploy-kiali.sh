@@ -9,7 +9,6 @@
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
-source ${SCRIPT_DIR}/../version-utils.sh
 
 KIALI_REPO_ROOT="${SCRIPT_DIR}/../../../"
 
@@ -36,27 +35,10 @@ deploy_kiali() {
   #Enable tracing
   helm_args+=(--set external_services.tracing.enabled="true")
 
-  # For ambient tests, Istio < 1.28 requires using the waypoint name for tracing lookups
-  if [ "${AMBIENT}" == "true" ]; then
-    local effective_version=""
-    if [ -n "${ISTIO_VERSION:-}" ]; then
-      effective_version="$(kiali_istio_normalize_version "${ISTIO_VERSION}")" || {
-        echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'." >&2
-        exit 1
-      }
-    else
-      effective_version="$(kiali_istio_detect_installed_version_from_istiod "${ISTIO_NAMESPACE}")" || {
-        echo "ERROR: Unable to detect the installed Istio version from the cluster (istiod image tag) while running ambient tests." >&2
-        echo "ERROR: Please pass --istio-version explicitly or ensure the istiod deployment image has a version tag." >&2
-        exit 1
-      }
-    fi
-
-    if kiali_istio_version_lt "${effective_version}" "1.28.0"; then
-      echo "Ambient detected. Istio version resolved to [${effective_version}]. Setting external_services.tracing.use_waypoint_name=true"
-      helm_args+=(--set external_services.tracing.use_waypoint_name="true")
-    fi
-  fi
+  # use_waypoint_name is left at its default (false).  The Cypress runtime
+  # auto-detection (ensureWaypointWorkloadTracingLookupReady) probes the
+  # tracing backend and flips the flag when the current Istio version
+  # requires it, so no version-dependent logic is needed here.
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     helm_args+=("--disable-openapi-validation")

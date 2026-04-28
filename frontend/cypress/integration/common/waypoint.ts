@@ -320,60 +320,25 @@ Then('all waypoints are healthy', () => {
   });
 });
 
-const waitForWaypointTracesInApi = (
-  namespace: string,
-  workload: string,
-  clusterName?: string,
-  maxRetries = 10
-): void => {
-  pollWorkloadTracesInApi(namespace, workload, clusterName, { maxRetries }).then(hasTraces => {
-    if (hasTraces) {
-      return;
-    }
-
-    throw new Error(
-      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, cluster=${clusterName ?? ''})`
-    );
-  });
-};
-
-const probeWorkloadTracesInApi = (
-  namespace: string,
-  workload: string,
-  clusterName?: string,
-  maxRetries = 6
-): Cypress.Chainable<boolean> => {
-  return pollWorkloadTracesInApi(namespace, workload, clusterName, { maxRetries });
-};
-
 const ensureWaypointWorkloadTracingLookupReady = (namespace: string, workload: string, clusterName?: string): void => {
-  probeWorkloadTracesInApi(namespace, workload, clusterName).then(hasTraces => {
+  pollWorkloadTracesInApi(namespace, workload, clusterName, { maxRetries: 6 }).then(hasTraces => {
     if (hasTraces) {
-      Cypress.log({
-        name: 'waypointTracingLookup',
-        message: 'Final value after setup: external_services.tracing.use_waypoint_name left as default'
-      });
       return;
     }
 
     Cypress.log({
       name: 'waypointTracingLookup',
-      message: `No traces found for ${namespace}/${workload}. Setting external_services.tracing.use_waypoint_name=true`
+      message: `No traces for ${namespace}/${workload} with current config. Setting use_waypoint_name=true`
     });
 
     setKialiBooleanConfig(TRACING_USE_WAYPOINT_NAME_CONFIG, true);
     waitForKialiApiReady();
     waitForWorkloadTracesInApi(namespace, workload, clusterName);
-
-    Cypress.log({
-      name: 'waypointTracingLookup',
-      message: `Final value after setup: external_services.tracing.use_waypoint_name=true`
-    });
   });
 };
 
 Then('the waypoint tracing data is ready', () => {
-  waitForWaypointTracesInApi('bookinfo', 'bookinfo-gateway-istio');
+  ensureWaypointWorkloadTracingLookupReady('bookinfo', 'bookinfo-gateway-istio');
 });
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {

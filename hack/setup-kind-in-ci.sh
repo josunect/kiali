@@ -26,35 +26,6 @@ infomsg() {
   echo "[INFO] ${1}"
 }
 
-determine_tracing_use_waypoint_name() {
-  # For ambient tests, Istio < 1.28 requires using the waypoint name for tracing lookups.
-  # For Istio >= 1.28, the default behavior (false) is expected.
-  if [ -z "${AMBIENT:-}" ]; then
-    echo "false"
-    return 0
-  fi
-
-  local effective_version=""
-  if [ -n "${ISTIO_VERSION:-}" ]; then
-    effective_version="$(kiali_istio_normalize_version "${ISTIO_VERSION}")" || {
-      echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'." >&2
-      return 1
-    }
-  else
-    effective_version="$(kiali_istio_detect_installed_version_from_istiod "istio-system")" || {
-      echo "ERROR: Unable to detect the installed Istio version from the cluster (istiod image tag) while running ambient tests." >&2
-      echo "ERROR: Please pass --istio-version explicitly or ensure the istiod deployment image has a version tag." >&2
-      return 1
-    }
-  fi
-
-  if kiali_istio_version_lt "${effective_version}" "1.28.0"; then
-    echo "true"
-  else
-    echo "false"
-  fi
-}
-
 helpmsg() {
   cat <<HELP
 This script will run setup a KinD cluster for testing Kiali against a real environment in CI.
@@ -115,8 +86,6 @@ HELP
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR}/..
-
-source "${SCRIPT_DIR}/istio/version-utils.sh"
 
 # TODO: Remove sail option once everything uses sail to install
 # process command line arguments
@@ -420,15 +389,6 @@ setup_kind_singlecluster() {
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
-  local tracing_use_waypoint_name
-  tracing_use_waypoint_name="$(determine_tracing_use_waypoint_name)"
-  local tracing_use_waypoint_args=()
-  # use_waypoint_name defaults to false. Only set it explicitly when true.
-  if [ "${tracing_use_waypoint_name}" == "true" ]; then
-    tracing_use_waypoint_args=(--set external_services.tracing.use_waypoint_name="true")
-  fi
-  infomsg "external_services.tracing.use_waypoint_name=${tracing_use_waypoint_name} (ambient=${AMBIENT:-false}, istio_version=${ISTIO_VERSION:-auto})"
-
   PERSES_ARGS=()
   if [ "${INSTALL_PERSES}" == "true" ]; then
     infomsg "Installing Perses"
@@ -512,7 +472,6 @@ setup_kind_singlecluster() {
     "${PERSES_ARGS[@]}" \
     --set external_services.tracing.enabled="true" \
     --set external_services.tracing.external_url="http://tracing.istio-system:16685/jaeger" \
-    "${tracing_use_waypoint_args[@]}" \
     --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
@@ -579,15 +538,6 @@ setup_kind_tempo() {
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
 
-  local tracing_use_waypoint_name
-  tracing_use_waypoint_name="$(determine_tracing_use_waypoint_name)"
-  local tracing_use_waypoint_args=()
-  # use_waypoint_name defaults to false. Only set it explicitly when true.
-  if [ "${tracing_use_waypoint_name}" == "true" ]; then
-    tracing_use_waypoint_args=(--set external_services.tracing.use_waypoint_name="true")
-  fi
-  infomsg "external_services.tracing.use_waypoint_name=${tracing_use_waypoint_name} (ambient=${AMBIENT:-false}, istio_version=${ISTIO_VERSION:-auto})"
-
   if [ "${DEPLOY_KIALI}" != "true" ]; then
     infomsg "Skipping Kiali deployment as requested"
     return
@@ -617,7 +567,6 @@ setup_kind_tempo() {
     --set external_services.tracing.external_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.internal_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.use_grpc="false" \
-    "${tracing_use_waypoint_args[@]}" \
     --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
