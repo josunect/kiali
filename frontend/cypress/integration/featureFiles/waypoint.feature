@@ -37,6 +37,7 @@ Feature: Kiali Waypoint related features
     And the user hovers in the "ambient" label and sees "L4" in the tooltip
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
     And the user sees the "Protocol" option in the pod tooltip, and is "HBONE"
+    And the "ratings-v1" tracing data is ready in the "bookinfo" namespace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
