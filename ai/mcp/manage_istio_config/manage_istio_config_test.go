@@ -551,7 +551,7 @@ func TestExecuteReadOnly_InvalidAction(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	assert.Equal(t, http.StatusOK, status)
 	assert.Contains(t, res, "invalid action")
 }
 
@@ -604,7 +604,7 @@ func TestExecuteReadOnly_GetNonExistentConfig(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "not found")
@@ -625,11 +625,11 @@ func TestExecuteReadOnly_GetNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 // ---------------------------------------------------------------------------
@@ -689,7 +689,7 @@ func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "invalid group")
@@ -711,7 +711,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "invalid group")
@@ -1521,11 +1521,11 @@ func TestIstioCreate_NamespaceDoesNotExist(t *testing.T) {
 	}
 
 	res, status := IstioCreate(r, args, businessLayer, conf)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestIstioPatch_NamespaceDoesNotExist(t *testing.T) {
@@ -1542,11 +1542,11 @@ func TestIstioPatch_NamespaceDoesNotExist(t *testing.T) {
 	}
 
 	res, status := IstioPatch(r, args, businessLayer, conf)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestIstioDelete_NamespaceDoesNotExist(t *testing.T) {
@@ -1562,11 +1562,11 @@ func TestIstioDelete_NamespaceDoesNotExist(t *testing.T) {
 	}
 
 	res, status := IstioDelete(r, args, businessLayer, conf)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_CreateInNonExistentNamespace(t *testing.T) {
@@ -1585,11 +1585,11 @@ func TestExecute_CreateInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_CreatePreviewInNonExistentNamespace(t *testing.T) {
@@ -1608,11 +1608,11 @@ func TestExecute_CreatePreviewInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_PatchInNonExistentNamespace(t *testing.T) {
@@ -1631,11 +1631,11 @@ func TestExecute_PatchInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_PatchPreviewInNonExistentNamespace(t *testing.T) {
@@ -1654,11 +1654,11 @@ func TestExecute_PatchPreviewInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_DeletePreviewInNonExistentNamespace(t *testing.T) {
@@ -1676,11 +1676,11 @@ func TestExecute_DeletePreviewInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestExecute_DeleteInNonExistentNamespace(t *testing.T) {
@@ -1698,11 +1698,11 @@ func TestExecute_DeleteInNonExistentNamespace(t *testing.T) {
 	}
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusNotFound, status)
+	assert.Equal(t, http.StatusNotFound, status, "missing namespace should return 404")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "nonexistent-ns")
-	assert.Contains(t, resStr, "does not exist")
+	assert.Contains(t, resStr, "does not exist in cluster")
 }
 
 func TestCheckNamespaceExists_ExistingNamespace(t *testing.T) {
@@ -1720,9 +1720,9 @@ func TestCheckNamespaceExists_MissingNamespace(t *testing.T) {
 	r := reqWithAuth()
 
 	msg, code := checkNamespaceExists(r.Context(), businessLayer, "no-such-ns", conf.KubernetesConfig.ClusterName)
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusNotFound, code, "missing namespace should return 404")
 	assert.Contains(t, msg, "no-such-ns")
-	assert.Contains(t, msg, "does not exist")
+	assert.Contains(t, msg, "does not exist in cluster")
 }
 
 // ---------------------------------------------------------------------------

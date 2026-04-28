@@ -28,6 +28,7 @@ func TestExecute(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "details-v1",
@@ -261,6 +262,7 @@ func TestActionRoutesMatchFrontend(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "details-v1",

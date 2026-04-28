@@ -61,10 +61,8 @@ func Execute(
 
 	// Validate namespace existence early so the user gets a clear message.
 	if kialiInterface.BusinessLayer != nil {
-		if _, nsErr := kialiInterface.BusinessLayer.Namespace.GetClusterNamespace(
-			kialiInterface.Request.Context(), namespace, clusterName,
-		); nsErr != nil {
-			return fmt.Sprintf("Namespace %q does not exist in cluster %q. Please verify the namespace name and try again.", namespace, clusterName), http.StatusOK
+		if nsErrMsg, nsCode := mcputil.ValidateNamespaceAccess(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, clusterName); nsErrMsg != "" {
+			return nsErrMsg + " Please verify the namespace name and your permissions, then try again.", nsCode
 		}
 	}
 

@@ -72,7 +72,7 @@ func TestExecute_MissingResourceType(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusBadRequest, code)
 	assert.Equal(t, "Resource type is required", resp)
 }
 
@@ -86,7 +86,7 @@ func TestExecute_InvalidResourceType(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusBadRequest, code)
 	assert.Contains(t, resp.(string), "unsupported resource type invalid_type")
 }
 
@@ -123,7 +123,7 @@ func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 
 		resp, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusOK, code)
+		assert.Equal(t, http.StatusBadRequest, code)
 		assert.Equal(t, "Namespaces are required when resource name is provided", resp)
 	})
 
@@ -139,7 +139,7 @@ func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 
 		_, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusOK, code)
+		assert.Equal(t, http.StatusNotFound, code)
 	})
 }
 
@@ -171,7 +171,7 @@ func TestExecute_InvalidNamespace(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "non-existent-namespace")
@@ -189,7 +189,7 @@ func TestExecute_AllInvalidNamespacesReturnsErrorMessage(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -208,7 +208,7 @@ func TestExecute_NamespacesWithWhitespace(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -228,7 +228,7 @@ func TestExecute_NamespacesWithEmptySegments(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -247,7 +247,7 @@ func TestExecute_ResourceNameWithMultipleNamespacesReturnsError(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "not found or not accessible")
@@ -284,7 +284,7 @@ func TestExecute_NamespaceResourceType(t *testing.T) {
 
 		resp, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusOK, code)
+		assert.Equal(t, http.StatusNotFound, code)
 		respStr, ok := resp.(string)
 		assert.True(t, ok, "Expected response to be a string")
 		assert.Contains(t, respStr, "nonexistent")
@@ -303,7 +303,7 @@ func TestExecute_NamespaceDetailNotFound(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, http.StatusNotFound, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "nonexistent-namespace")
@@ -363,7 +363,7 @@ func TestRecoverFromPanic_CatchesPanic(t *testing.T) {
 		panic("simulated nil pointer dereference")
 	}()
 
-	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, http.StatusInternalServerError, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "Internal error")

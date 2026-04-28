@@ -1,6 +1,7 @@
 package mcputil
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,50 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/client-go/tools/clientcmd/api"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/handlers/authentication"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
-
-func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
-	authInfoContext := authentication.GetAuthInfoContext(r.Context())
-	if authInfoContext != nil {
-		if authInfo, ok := authInfoContext.(map[string]*api.AuthInfo); ok {
-			return authInfo, nil
-		} else {
-			return nil, errors.New("authInfo is not of type map[string]*api.AuthInfo")
-		}
-	} else {
-		return nil, errors.New("authInfo missing from the request context")
-	}
-}
-
-func CheckNamespaceAccess(r *http.Request, conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, namespace string, cluster string) (*models.Namespace, error) {
-	authInfos, err := getAuthInfo(r)
-	if err != nil {
-		return nil, err
-	}
-
-	userClients, err := clientFactory.GetClients(authInfos)
-	if err != nil {
-		return nil, errors.New("an error occurred while attempting to use your session token, check your session token and the Kiali server logs")
-	}
-
-	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
-	ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
-	if err != nil {
-		return nil, errors.New("cannot access namespace data: " + err.Error())
-	}
-	return ns, nil
-}
 
 func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
@@ -84,6 +48,22 @@ func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.Istio
 	q.RequestProtocol = GetStringOrDefault(args, DefaultRequestProtocol, "requestProtocol")
 
 	return extractBaseMetricsQueryParams(args, &q.RangeQuery, namespaceInfo)
+}
+
+// ValidateNamespaceAccess checks that the given namespace exists and is accessible.
+// It returns an error message plus the HTTP status to be propagated by the tool.
+func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (string, int) {
+	if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		switch {
+		case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+			return fmt.Sprintf("Namespace %q is not accessible in cluster %q.", namespace, cluster), http.StatusForbidden
+		case k8serrors.IsNotFound(err):
+			return fmt.Sprintf("Namespace %q does not exist in cluster %q.", namespace, cluster), http.StatusNotFound
+		default:
+			return fmt.Sprintf("failed to validate namespace %q in cluster %q: %v", namespace, cluster, err), http.StatusInternalServerError
+		}
+	}
+	return "", http.StatusOK
 }
 
 func extractBaseMetricsQueryParams(args map[string]interface{}, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {

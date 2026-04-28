@@ -1,6 +1,7 @@
 package list_traces
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -19,12 +20,16 @@ func Execute(
 	args map[string]interface{},
 ) (interface{}, int) {
 	parsed := parseArgs(args, kialiInterface.Conf)
+	ctx := kialiInterface.Request.Context()
 
 	if parsed.Namespace == "" || parsed.ServiceName == "" {
 		return "namespace and serviceName are required", http.StatusBadRequest
 	}
 
-	ctx := kialiInterface.Request.Context()
+	if nsErrMsg, nsCode := mcputil.ValidateNamespaceAccess(ctx, kialiInterface.BusinessLayer, parsed.Namespace, parsed.ClusterName); nsErrMsg != "" {
+		return nsErrMsg + fmt.Sprintf(" Cannot retrieve traces for service %q.", parsed.ServiceName), nsCode
+	}
+
 	conf := kialiInterface.Conf
 	q := buildServiceQuery(parsed, conf, true)
 	traces, err := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q)

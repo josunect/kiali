@@ -42,7 +42,7 @@ func mockPrometheusForGraph(promAPI *prometheustest.PromAPIMock) {
 	promAPI.On("Buildinfo", mock.Anything).Return(prom_v1.BuildinfoResult{}, nil)
 }
 
-// reqWithAuth sets auth info on the request context so CheckNamespaceAccess can resolve user clients.
+// reqWithAuth sets auth info on the request context so ValidateNamespaceAccess can resolve user clients.
 func reqWithAuth(req *http.Request, conf *config.Config, token string) *http.Request {
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: token}}
 	ctx := authentication.SetAuthInfoContext(req.Context(), authInfo)
@@ -58,7 +58,7 @@ func mockPrometheusForHealth(prom *prometheustest.PromClientMock) {
 	prom.On("GetWorkloadRequestRates", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(emptyVec, emptyVec, nil)
 }
 
-func TestExecute_NonExistentNamespaces_ReturnsOKWithMessage(t *testing.T) {
+func TestExecute_NonExistentNamespaces_ReturnsNotFoundWithMessage(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
@@ -83,14 +83,14 @@ func TestExecute_NonExistentNamespaces_ReturnsOKWithMessage(t *testing.T) {
 	}
 
 	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: nil, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
-	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, http.StatusNotFound, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, msg, "nonexistent-ns")
 	assert.Contains(t, msg, "not found or not accessible")
 }
 
-func TestExecute_AllNonExistentFromList_ReturnsOKWithMessage(t *testing.T) {
+func TestExecute_AllNonExistentFromList_ReturnsNotFoundWithMessage(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
@@ -114,7 +114,7 @@ func TestExecute_AllNonExistentFromList_ReturnsOKWithMessage(t *testing.T) {
 	}
 
 	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: nil, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
-	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, http.StatusNotFound, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
 	assert.True(t, strings.Contains(msg, "default2") || strings.Contains(msg, "missing-ns"))

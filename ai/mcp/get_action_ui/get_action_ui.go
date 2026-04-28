@@ -29,6 +29,28 @@ type GetActionUIResponse struct {
 
 var validResourceTypes = []string{"service", "workload", "app", "istio", "graph", "overview", "namespaces"}
 
+func invalidNamespaces(ctx context.Context, businessLayer *business.Layer, clusterName, rawNamespaces string) []string {
+	if rawNamespaces == "" || rawNamespaces == "all" {
+		return nil
+	}
+	invalid := make([]string, 0)
+	seen := map[string]struct{}{}
+	for _, ns := range strings.Split(rawNamespaces, ",") {
+		ns = strings.TrimSpace(ns)
+		if ns == "" {
+			continue
+		}
+		if _, ok := seen[ns]; ok {
+			continue
+		}
+		seen[ns] = struct{}{}
+		if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, ns, clusterName); err != nil {
+			invalid = append(invalid, ns)
+		}
+	}
+	return invalid
+}
+
 // validateResourceExists checks that the given resource exists in the namespace
 // before generating a navigation link. Returns a non-empty error message when
 // either the namespace is inaccessible or the named resource cannot be found.
@@ -112,6 +134,15 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 	if !slices.Contains(validResourceTypes, resourceType) {
 		return "invalid resourceType '" + resourceType + "'. Must be one of: service, workload, app, istio, graph, overview, namespaces", http.StatusBadRequest
+	}
+	// Validate explicitly provided namespaces before building any action.
+	// Keep single-namespace + resource validation behavior unchanged below.
+	if resourceName == "" || strings.Contains(namespaces, ",") {
+		if invalid := invalidNamespaces(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, clusterName, namespaces); len(invalid) > 0 {
+			return GetActionUIResponse{
+				Errors: fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot generate UI actions.", strings.Join(invalid, ", ")),
+			}, http.StatusOK
+		}
 	}
 
 	namespacesValue := namespaces

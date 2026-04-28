@@ -38,13 +38,26 @@ func classifyError(err error, resourceType, name, namespace string) string {
 	}
 }
 
+func classifyErrorStatus(err error) int {
+	switch {
+	case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+		return http.StatusForbidden
+	case k8serrors.IsNotFound(err):
+		return http.StatusNotFound
+	case k8serrors.IsBadRequest(err):
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
+}
+
 // recoverFromPanic catches panics from the business layer (e.g. nil pointer
 // dereferences when a K8s API call returns nil + error) and converts them into
 // a clean error message returned as HTTP 200 so the LLM can relay it to the user.
 func recoverFromPanic(res *interface{}, status *int, resourceType, name, namespace string) {
 	if r := recover(); r != nil {
 		*res = fmt.Sprintf("Internal error while processing %s %q in namespace %q: %v", resourceType, name, namespace, r)
-		*status = http.StatusOK
+		*status = http.StatusInternalServerError
 	}
 }
 
@@ -69,14 +82,14 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	errors := map[string]string{}
 	// Validate parameters
 	if resourceType == "" {
-		return "Resource type is required", http.StatusOK
+		return "Resource type is required", http.StatusBadRequest
 	}
 
 	if resourceType == "namespace" && resourceName != "" {
 		namespaces = resourceName
 	}
 	if resourceName != "" && namespaces == "" {
-		return "Namespaces are required when resource name is provided", http.StatusOK
+		return "Namespaces are required when resource name is provided", http.StatusBadRequest
 	}
 	if queryTime.IsZero() {
 		queryTime = util.Clock.Now()
@@ -84,14 +97,19 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	var namespacesSlice []string
 	if namespaces != "" {
 		invalidNamespaces := []string{}
+		invalidStatusCode := http.StatusNotFound
 		for _, ns := range strings.Split(namespaces, ",") {
 			ns = strings.TrimSpace(ns)
 			if ns == "" {
 				continue
 			}
-			_, err := mcputil.CheckNamespaceAccess(kialiInterface.Request, kialiInterface.Conf, kialiInterface.KialiCache, kialiInterface.Discovery, kialiInterface.ClientFactory, ns, clusterName)
-			if err != nil {
+			_, statusCode := mcputil.ValidateNamespaceAccess(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, ns, clusterName)
+			if statusCode != http.StatusOK {
 				invalidNamespaces = append(invalidNamespaces, ns)
+				if statusCode == http.StatusInternalServerError ||
+					(statusCode == http.StatusForbidden && invalidStatusCode != http.StatusInternalServerError) {
+					invalidStatusCode = statusCode
+				}
 				continue
 			}
 			namespacesSlice = append(namespacesSlice, ns)
@@ -104,12 +122,12 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			if resourceName != "" {
 				msg = fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve %s %q.", strings.Join(invalidNamespaces, ", "), resourceType, resourceName)
 			}
-			return msg, http.StatusOK
+			return msg, invalidStatusCode
 		}
 	} else {
 		allNamespaces, err := kialiInterface.BusinessLayer.Namespace.GetClusterNamespaces(kialiInterface.Request.Context(), clusterName)
 		if err != nil {
-			return fmt.Sprintf("error fetching namespace list: %s", err.Error()), http.StatusOK
+			return fmt.Sprintf("error fetching namespace list: %s", err.Error()), classifyErrorStatus(err)
 		}
 		namespacesSlice = make([]string, len(allNamespaces))
 		for i, ns := range allNamespaces {
@@ -128,7 +146,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	var status int
 	var err error
 	if resourceName != "" && len(namespacesSlice) > 1 {
-		return "Exactly one namespace is required when resource name is provided", http.StatusOK
+		return "Exactly one namespace is required when resource name is provided", http.StatusBadRequest
 	}
 	if resourceName != "" && len(namespacesSlice) == 1 {
 		log.Debugf("Getting resource details type: %s for resource name: %s and namespace: %s", resourceType, resourceName, namespacesSlice[0])
@@ -148,9 +166,9 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		return map[string]interface{}{
 			"response": resp,
 			"errors":   errors,
-		}, http.StatusOK
+		}, status
 	}
-	return resp, http.StatusOK
+	return resp, status
 }
 
 func calculateRateInterval(
@@ -180,7 +198,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 
 	interval, calcErr := calculateRateInterval(ctx, businessLayer, resourceArgs, namespace)
 	if calcErr != nil {
-		return calcErr.Error(), http.StatusOK, nil
+		return calcErr.Error(), http.StatusInternalServerError, nil
 	}
 	switch resourceArgs.ResourceType {
 	case "service":
@@ -193,7 +211,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 			resourceArgs.QueryTime,
 			true)
 		if err != nil {
-			return classifyError(err, "service", resourceArgs.ResourceName, namespace), http.StatusOK, nil
+			return classifyError(err, "service", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 		serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
 		return TransformServiceDetail(serviceDetails), http.StatusOK, nil
@@ -206,13 +224,13 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 		}
 		workloadDetails, err := businessLayer.Workload.GetWorkload(ctx, criteria)
 		if err != nil {
-			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), http.StatusOK, nil
+			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 		workloadDetails.Validations = istioConfigValidations
 		workloadDetails.Health, err = businessLayer.Health.GetWorkloadHealth(
 			ctx, criteria.Namespace, criteria.Cluster, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
 		if err != nil {
-			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), http.StatusOK, nil
+			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 		return TransformWorkloadDetail(workloadDetails), http.StatusOK, nil
 	case "app":
@@ -223,14 +241,14 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 		}
 		appDetails, err := businessLayer.App.GetAppDetails(ctx, criteria)
 		if err != nil {
-			return classifyError(err, "app", resourceArgs.ResourceName, namespace), http.StatusOK, nil
+			return classifyError(err, "app", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 		return TransformAppDetail(&appDetails), http.StatusOK, nil
 	case "namespace":
 		log.Debugf("Getting namespace details for resource name: %s", resourceArgs.ResourceName)
 		namespaces, err := businessLayer.Namespace.GetNamespaces(ctx)
 		if err != nil {
-			return classifyError(err, "namespace", resourceArgs.ResourceName, namespace), http.StatusOK, nil
+			return classifyError(err, "namespace", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 		for _, ns := range namespaces {
 			if ns.Name == resourceArgs.ResourceName && ns.Cluster == resourceArgs.ClusterName {
@@ -238,10 +256,10 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 				return TransformNamespaceDetail(&ns, counts), http.StatusOK, nil
 			}
 		}
-		return fmt.Sprintf("Resource not found: namespace %q does not exist", resourceArgs.ResourceName), http.StatusOK, nil
+		return fmt.Sprintf("Resource not found: namespace %q does not exist", resourceArgs.ResourceName), http.StatusNotFound, nil
 	}
 
-	return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusOK, nil
+	return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusBadRequest, nil
 }
 
 func getNamespaceCounts(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) NamespaceCounts {
@@ -331,12 +349,12 @@ func getList(r *http.Request, conf *config.Config, kialiCache cache.KialiCache, 
 	case "namespace":
 		return GetListNamespaces(r, conf, kialiCache, businessLayer, resourceArgs)
 	default:
-		return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusOK, nil
+		return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusBadRequest, nil
 	}
 	for _, ns := range nss {
 		interval, calcErr := calculateRateInterval(r.Context(), businessLayer, resourceArgs, ns)
 		if calcErr != nil {
-			return calcErr.Error(), http.StatusOK, nil
+			return calcErr.Error(), http.StatusInternalServerError, nil
 		}
 		if serviceCriteria != nil {
 			criteria := *serviceCriteria
@@ -345,7 +363,7 @@ func getList(r *http.Request, conf *config.Config, kialiCache cache.KialiCache, 
 
 			serviceList, err := businessLayer.Svc.GetServiceList(r.Context(), criteria)
 			if err != nil {
-				return classifyError(err, "service", "", ns), http.StatusOK, nil
+				return classifyError(err, "service", "", ns), classifyErrorStatus(err), nil
 			}
 			clusterServices.Services = append(clusterServices.Services, serviceList.Services...)
 			clusterServices.Validations = clusterServices.Validations.MergeValidations(serviceList.Validations)
@@ -356,7 +374,7 @@ func getList(r *http.Request, conf *config.Config, kialiCache cache.KialiCache, 
 
 			workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
 			if err != nil {
-				return classifyError(err, "workload", "", ns), http.StatusOK, nil
+				return classifyError(err, "workload", "", ns), classifyErrorStatus(err), nil
 			}
 			clusterWorkloads.Workloads = append(clusterWorkloads.Workloads, workloadList.Workloads...)
 			clusterWorkloads.Validations = clusterWorkloads.Validations.MergeValidations(workloadList.Validations)
@@ -367,7 +385,7 @@ func getList(r *http.Request, conf *config.Config, kialiCache cache.KialiCache, 
 
 			appList, err := businessLayer.App.GetAppList(r.Context(), criteria)
 			if err != nil {
-				return classifyError(err, "app", "", ns), http.StatusOK, nil
+				return classifyError(err, "app", "", ns), classifyErrorStatus(err), nil
 			}
 			clusterApps.Apps = append(clusterApps.Apps, appList.Apps...)
 		}
@@ -382,14 +400,14 @@ func getList(r *http.Request, conf *config.Config, kialiCache cache.KialiCache, 
 	if clusterApps != nil {
 		return TransformAppList(clusterApps), http.StatusOK, nil
 	}
-	return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusOK, nil
+	return fmt.Sprintf("unsupported resource type %s", resourceArgs.ResourceType), http.StatusBadRequest, nil
 }
 
 func GetListNamespaces(r *http.Request, conf *config.Config, kialiCache cache.KialiCache,
 	businessLayer *business.Layer, resourceArgs ResourceDetailArgs) (interface{}, int, error) {
 	clusterNamespaces, err := businessLayer.Namespace.GetNamespaces(r.Context())
 	if err != nil {
-		return classifyError(err, "namespace", "", ""), http.StatusOK, nil
+		return classifyError(err, "namespace", "", ""), classifyErrorStatus(err), nil
 	}
 
 	namespacesToInclude := make(map[string]bool)
@@ -416,12 +434,12 @@ func GetListNamespaces(r *http.Request, conf *config.Config, kialiCache cache.Ki
 	health, _, err := businessLayer.Health.GetNamespaceHealth(r.Context(), nsNames, resourceArgs.ClusterName, healthTypes, resourceArgs.RateInterval)
 
 	if err != nil {
-		return classifyError(err, "namespace", "", ""), http.StatusOK, nil
+		return classifyError(err, "namespace", "", ""), classifyErrorStatus(err), nil
 	}
 
 	tls, err := businessLayer.TLS.ClusterWideNSmTLSStatus(r.Context(), filteredNamespaces, resourceArgs.ClusterName)
 	if err != nil {
-		return classifyError(err, "namespace", "", ""), http.StatusOK, nil
+		return classifyError(err, "namespace", "", ""), classifyErrorStatus(err), nil
 	}
 
 	tlsMap := make(map[string]string)
