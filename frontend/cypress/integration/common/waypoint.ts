@@ -349,17 +349,26 @@ const probeWorkloadTracesInApi = (
 const ensureWaypointWorkloadTracingLookupReady = (namespace: string, workload: string, clusterName?: string): void => {
   probeWorkloadTracesInApi(namespace, workload, clusterName).then(hasTraces => {
     if (hasTraces) {
+      Cypress.log({
+        name: 'waypointTracingLookup',
+        message: 'Final value after setup: external_services.tracing.use_waypoint_name left as default'
+      });
       return;
     }
 
     Cypress.log({
       name: 'waypointTracingLookup',
-      message: `No traces found for ${namespace}/${workload} with the default tracing lookup. Enabling external_services.tracing.use_waypoint_name=true`
+      message: `No traces found for ${namespace}/${workload}. Setting external_services.tracing.use_waypoint_name=true`
     });
 
     setKialiBooleanConfig(TRACING_USE_WAYPOINT_NAME_CONFIG, true);
     waitForKialiApiReady();
     waitForWorkloadTracesInApi(namespace, workload, clusterName);
+
+    Cypress.log({
+      name: 'waypointTracingLookup',
+      message: `Final value after setup: external_services.tracing.use_waypoint_name=true`
+    });
   });
 };
 
