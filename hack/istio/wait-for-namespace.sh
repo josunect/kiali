@@ -47,12 +47,12 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
     ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=merge -p '{"spec": {"deployment": {"accessible_namespaces": []}}}'
   fi
 
-  for NAMESPACE in ${NAMESPACES[@]}; do
+  for NAMESPACE in "${NAMESPACES[@]}"; do
     ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/-", "value":"'$NAMESPACE'"}]'
   done
 
   echo -n "Waiting for operator to finish reconciling the CR named [$KIALI_CR_NAME] located in namespace [$KIALI_CR_NAMESPACE]"
-  while [ "$KIALI_CR_REASON" != "Successful" -o "$KIALI_CR_STATUS" != "True" ]; do
+  while [ "$KIALI_CR_REASON" != "Successful" ] || [ "$KIALI_CR_STATUS" != "True" ]; do
     sleep 1
     echo -n "."
     KIALI_CR_REASON="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].reason}')"
@@ -73,6 +73,6 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
   fi
 fi
 
-for NAMESPACE in ${NAMESPACES[@]}; do
+for NAMESPACE in "${NAMESPACES[@]}"; do
   ${CLIENT_EXE} wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
 done
