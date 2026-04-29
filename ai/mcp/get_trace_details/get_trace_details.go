@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/models"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
@@ -16,6 +17,9 @@ func Execute(
 	traceID := mcputil.GetStringArg(args, "trace_id", "traceId")
 	if traceID == "" {
 		return "trace_id is required", http.StatusBadRequest
+	}
+	if !models.ValidTraceIDRe.MatchString(traceID) {
+		return "Invalid trace_id format: must be 1-32 hex characters", http.StatusBadRequest
 	}
 
 	ctx := kialiInterface.Request.Context()

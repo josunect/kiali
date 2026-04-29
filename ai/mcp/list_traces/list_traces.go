@@ -143,6 +143,9 @@ func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
 	out.ErrorOnly = mcputil.AsBoolFromArgs(args, "errorOnly", "error_only")
 
 	out.Limit = mcputil.AsIntOrDefault(args, mcputil.DefaultTracesLimit, "limit")
+	if out.Limit > models.MaxTracingLimit {
+		out.Limit = models.MaxTracingLimit
+	}
 	out.LookbackSeconds = mcputil.AsIntOrDefault(args, mcputil.DefaultLookbackSeconds, "lookback_seconds", "lookbackSeconds")
 
 	return out
