@@ -769,6 +769,8 @@ else
     }
   fi
 
+  wait_for_istiod_ready "${NAMESPACE}" "300s"
+
   echo "Installing Addons: [${ADDONS}]"
   for addon in ${ADDONS}; do
     echo "Installing addon: [${addon}]"

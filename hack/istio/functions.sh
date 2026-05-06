@@ -22,6 +22,38 @@ ensure_gateway_api_crds() {
     { ${client} kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${version}" | ${client} apply -f - ${context_args}; }
 }
 
+# Wait for istiod to be reachable before applying resources that may trigger
+# the validating webhook. Recent Istio versions can report the install as ready
+# slightly before the webhook backend is actually serving.
+wait_for_istiod_ready() {
+  local namespace="${1:-istio-system}"
+  local timeout="${2:-300s}"
+  local client="${CLIENT_EXE:-kubectl}"
+  local sleep_seconds=5
+  local timeout_seconds="${timeout%s}"
+  local max_attempts
+  local attempt=0
+
+  if ! [[ "${timeout_seconds}" =~ ^[0-9]+$ ]]; then
+    timeout_seconds=300
+  fi
+  max_attempts=$(((timeout_seconds + sleep_seconds - 1) / sleep_seconds))
+
+  echo "Waiting for istiod deployment in namespace [${namespace}]"
+  while [ "${attempt}" -lt "${max_attempts}" ]; do
+    if ${client} wait --for=condition=Available deployment -l app=istiod -n "${namespace}" --timeout="${sleep_seconds}s" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    echo "istiod is not ready yet; retrying in ${sleep_seconds}s"
+    attempt=$((attempt + 1))
+  done
+
+  echo "ERROR: Timed out waiting for istiod to be ready in namespace [${namespace}]"
+  ${client} get deployments -n "${namespace}" -l app=istiod || true
+  return 1
+}
+
 # Returns 0 if a smcp in given namespaces contains .spec.mode=ClusterWide, 1 otherwise.
 is_cluster_wide() {
   local mode=$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o=jsonpath='{.items[0].spec.mode}' 2> /dev/null || true)

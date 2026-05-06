@@ -31,12 +31,17 @@ ensure_command () {
   fi
 }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/functions.sh"
+
 requirements=("yq" "helm")
 for req in "${requirements[@]}"; do
   ensure_command "$req"
 done
 
 ADDONS="prometheus grafana jaeger"
+ADDON_INSTALL_MAX_RETRIES=30
+ADDON_INSTALL_RETRY_INTERVAL=10
 CONFIG_PROFILE=""
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
@@ -446,10 +451,13 @@ if [ "${CONFIG_PROFILE}" == "ambient" ]; then
   kubectl apply -f - <<<"$ztunnelYAML"
 fi
 
+if [ "${WAIT}" == "true" ]; then
+  wait_for_istiod_ready "${ISTIO_NAMESPACE}" "300s"
+fi
+
 # Install addons
 for addon in ${ADDONS}; do
   if [ "${addon}" == "tempo" ]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
     echo "Installing tempo"
     ${SCRIPT_DIR}/tempo/install-tempo-env.sh -c kubectl -ot true
 
@@ -463,9 +471,23 @@ for addon in ${ADDONS}; do
     # Verison comes in the form v1.23.0 but we want 1.23
     # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23
     addon_version="${istio_version:1:4}"
-    curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml" | \
+    addon_attempt=1
+    while ! (curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml" | \
       yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
-      kubectl apply -n "${ISTIO_NAMESPACE}" -f -
+      kubectl apply -n "${ISTIO_NAMESPACE}" -f -)
+    do
+      if [ "${addon_attempt}" -ge "${ADDON_INSTALL_MAX_RETRIES}" ]; then
+        echo "Failed to install addon [${addon}] after ${ADDON_INSTALL_MAX_RETRIES} attempts."
+        exit 1
+      fi
+
+      echo "Failed to install addon [${addon}] - retry ${addon_attempt}/${ADDON_INSTALL_MAX_RETRIES} in ${ADDON_INSTALL_RETRY_INTERVAL} seconds..."
+      sleep "${ADDON_INSTALL_RETRY_INTERVAL}"
+      if [ "${WAIT}" == "true" ]; then
+        wait_for_istiod_ready "${ISTIO_NAMESPACE}" "300s"
+      fi
+      addon_attempt=$((addon_attempt + 1))
+    done
   fi
 done
 
