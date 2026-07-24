@@ -246,7 +246,7 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 		conf,
 		workload,
 		ns1,
-		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{l7Policy},
 		nil,
 	).Check()
@@ -254,6 +254,33 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.False(valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+}
+
+func TestWorkloadHasAuthPolicyAndNoWaypoint_NonAmbientNamespace_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Sidecar / non-Ambient namespaces must not get KIA1317 for normal L7 AuthPolicies.
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{"app": "reviews"})
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	workload.IstioSidecar = true
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{"istio-injection": "enabled"}, IsAmbient: false}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
 }
 
 func TestWorkloadHasL7AuthPolicyForOtherWorkload_NoWarning(t *testing.T) {
@@ -273,7 +300,7 @@ func TestWorkloadHasL7AuthPolicyForOtherWorkload_NoWarning(t *testing.T) {
 		conf,
 		workload,
 		ns1,
-		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{l7Policy},
 		nil,
 	).Check()
@@ -298,7 +325,7 @@ func TestWorkloadHasL7AuthPolicyTargetRefsService_WarnsMatchedWorkload(t *testin
 		conf,
 		workload,
 		ns1,
-		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{l7Policy},
 		services,
 	).Check()
@@ -324,7 +351,7 @@ func TestWorkloadHasL7AuthPolicyTargetRefsService_NoWarningForOtherWorkload(t *t
 		conf,
 		workload,
 		ns1,
-		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{l7Policy},
 		services,
 	).Check()

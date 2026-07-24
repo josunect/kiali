@@ -131,6 +131,10 @@ func (awc AmbientWorkloadChecker) hasSidecarInAmbientNamespace() bool {
 }
 
 func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
+	// KIA1317 is Ambient-only: in sidecar mode L7 AuthPolicies apply via selectors without a waypoint.
+	if !awc.namespaces.IsNamespaceAmbient(awc.workload.Namespace, awc.cluster) {
+		return false
+	}
 	if awc.workload.IsWaypoint() || awc.workload.IsGateway() {
 		return false
 	}
