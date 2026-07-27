@@ -408,8 +408,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then user "opens" display menu
     And user "enables" "security" option
-    # Ambient TCP edges are racy in CI (often 6 instead of 8); HTTP cross-ns traffic is stable at 4.
-    Then 6 edges appear in the graph
+    Then 8 edges appear in the graph
     Then security "appears" in the graph
     And user "closes" display menu
     Then user "opens" traffic menu

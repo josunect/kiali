@@ -138,8 +138,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
 };
 
 // Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
-// can add more, but CI often plateaus below a full 8-edge graph (see #10105). Wait for the
-// stable HTTP traffic plus at least some ambient TCP before asserting.
+// adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
 const waitForSidecarAmbientTrafficGeneratedInGraph = (
   maxRetries = 30,
   retryCount = 0,
@@ -148,7 +147,7 @@ const waitForSidecarAmbientTrafficGeneratedInGraph = (
 ): void => {
   const targetNamespace = 'test-ambient,test-sidecar';
   const minHttpEdges = 4;
-  const minTotalEdges = 6;
+  const minTotalEdges = 8;
 
   if (retryCount >= maxRetries) {
     throw new Error(
