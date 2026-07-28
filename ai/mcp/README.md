@@ -434,35 +434,35 @@ See existing tools for end-to-end examples.
 |--------|-------|
 | Tasks Passed | 21/22 (95%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 86173 |
+| Total Tokens Estimate | 90393 |
 | MCP Schema Tokens | 57530 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Create Istio Gateway | 4049 | 2615 | ✅ |
-| Remove Fault Injection | 7223 | 2615 | ✅ |
-| List and Validate VirtualServices | 4035 | 2615 | ✅ |
+| Create Istio Gateway | 4386 | 2615 | ✅ |
+| Remove Fault Injection | 7849 | 2615 | ✅ |
+| List and Validate VirtualServices | 2717 | 2615 | ✅ |
 | List Comprehensive Istio Configuration | 2911 | 2615 | ✅ |
 | List and Validate DestinationRules | 2749 | 2615 | ✅ |
-| Update Traffic Shifting | 4827 | 2615 | ✅ |
+| Update Traffic Shifting | 8064 | 2615 | ✅ |
 | Analyze Service Traffic Volume | 2765 | 2615 | ✅ |
-| Analyze Workload Response Times | 2780 | 2615 | ✅ |
+| Analyze Workload Response Times | 4844 | 2615 | ✅ |
 | Identify Degraded Namespaces | 3021 | 2615 | ✅ |
 | List Mesh-Enabled Namespaces | 3021 | 2615 | ✅ |
-| Inspect Service Details | 7217 | 2615 | ✅ |
-| Inspect Workload Details | 3762 | 2615 | ❌ |
+| Inspect Service Details | 7876 | 2615 | ✅ |
+| Inspect Workload Details | 3294 | 2615 | ❌ |
 | Inventory Namespace Services | 3025 | 2615 | ✅ |
 | Inventory Workloads with Sidecar Status | 3341 | 2615 | ✅ |
 | Comprehensive Mesh Health Audit | 3021 | 2615 | ✅ |
-| Visualize Namespace Traffic | 3523 | 2615 | ✅ |
+| Visualize Namespace Traffic | 3522 | 2615 | ✅ |
 | Audit Control Plane Connectivity | 3027 | 2615 | ✅ |
-| Visualize Cross-Namespace Traffic | 3629 | 2615 | ✅ |
-| Visualize Workload-Level Topology | 3571 | 2615 | ✅ |
-| Debug Service Errors via Logs | 5769 | 2615 | ✅ |
-| Analyze Latency with Distributed Tracing | 5723 | 2615 | ✅ |
-| Retrieve Recent Workload Logs | 3184 | 2615 | ✅ |
+| Visualize Cross-Namespace Traffic | 3628 | 2615 | ✅ |
+| Visualize Workload-Level Topology | 3572 | 2615 | ✅ |
+| Debug Service Errors via Logs | 4963 | 2615 | ✅ |
+| Analyze Latency with Distributed Tracing | 5608 | 2615 | ✅ |
+| Retrieve Recent Workload Logs | 3189 | 2615 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
 ## Multicluster token consumption
@@ -477,19 +477,19 @@ Results from the **multicluster** mcpchecker job (`tests/evals/gemini/eval-multi
 |--------|-------|
 | Tasks Passed | 5/6 (83%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 28222 |
+| Total Tokens Estimate | 25016 |
 | MCP Schema Tokens | 17304 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Audit Multicluster Mesh Health | 8999 | 2884 | ✅ |
-| Analyze Remote Service Metrics | 4133 | 2884 | ✅ |
-| Discover Accessible Clusters | 3255 | 2884 | ✅ |
-| Inspect Remote Cluster Workload | 3889 | 2884 | ❌ |
-| Visualize West Cluster Traffic | 4111 | 2884 | ✅ |
-| List Remote Cluster Traces | 3835 | 2884 | ✅ |
+| Audit Multicluster Mesh Health | 4528 | 2884 | ❌ |
+| Analyze Remote Service Metrics | 4030 | 2884 | ✅ |
+| Discover Accessible Clusters | 3251 | 2884 | ✅ |
+| Inspect Remote Cluster Workload | 5387 | 2884 | ✅ |
+| Visualize West Cluster Traffic | 3980 | 2884 | ✅ |
+| List Remote Cluster Traces | 3840 | 2884 | ✅ |
 <!-- TOKENS-CONSUMPTION-MULTICLUSTER-END -->
 
 ## MCP evaluation (CI)
