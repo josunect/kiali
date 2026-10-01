@@ -21,6 +21,7 @@ import type {
   RankMode,
   RankResult,
   SummaryData,
+  TelemetryVendor,
   TrafficRate
 } from '../types/Graph';
 import type { TLSStatus } from '../types/TLSStatus';
@@ -118,6 +119,7 @@ export interface GraphToolbarState {
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
   showWaypoints: boolean;
+  telemetryVendor: TelemetryVendor;
   trafficRates: TrafficRate[];
 }
 

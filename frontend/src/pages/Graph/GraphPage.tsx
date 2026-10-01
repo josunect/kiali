@@ -1,26 +1,26 @@
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
-import { connect, DispatchProp } from 'react-redux';
+import type { DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import { Namespace } from '../../types/Namespace';
-import {
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import type { Namespace } from '../../types/Namespace';
+import type {
   DecoratedGraphElements,
-  EdgeLabelMode,
   GraphDefinition,
   GraphType,
   NodeParamsType,
-  NodeType,
   SummaryData,
-  UNKNOWN,
   TrafficRate,
   RankMode,
   RankResult,
   EdgeMode,
   GraphLayout,
-  FocusNode
+  FocusNode,
+  TelemetryVendor
 } from '../../types/Graph';
+import { EdgeLabelMode, NodeType, UNKNOWN } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { addDanger, addError, addInfo, addSuccess } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
@@ -39,9 +39,10 @@ import {
   refreshIntervalSelector,
   replayActiveSelector,
   replayQueryTimeSelector,
+  telemetryVendorSelector,
   trafficRatesSelector
 } from '../../store/Selectors';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { PFColors } from 'components/Pf/PfColors';
@@ -51,25 +52,28 @@ import { getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from
 import { Label, Badge } from '@patternfly/react-core';
 
 import { toRangeString } from 'components/Time/Utils';
-import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
+import type { FetchParams } from '../../services/GraphDataSource';
+import { GraphDataSource, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphThunkActions } from '../../actions/GraphThunkActions';
-import { JaegerTrace } from 'types/TracingInfo';
-import { KialiDispatch } from 'types/Redux';
+import type { JaegerTrace } from 'types/TracingInfo';
+import type { KialiDispatch } from 'types/Redux';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphTour } from 'pages/Graph/GraphHelpTour';
-import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
+import type { TourInfo } from 'components/Tour/TourStop';
+import { getNextTourStop } from 'components/Tour/TourStop';
 import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
-import { ServiceDetailsInfo } from 'types/ServiceInfo';
-import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { ServiceDetailsInfo } from 'types/ServiceInfo';
+import type { PeerAuthentication } from 'types/IstioObjects';
+import { DestinationRuleC } from 'types/IstioObjects';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ConfirmDeleteTrafficRoutingModal } from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { Graph } from './Graph';
-import { Controller } from '@patternfly/react-topology';
+import type { Controller } from '@patternfly/react-topology';
 import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
@@ -99,6 +103,7 @@ type ReduxDispatchProps = {
   setLayout: (layout: GraphLayout) => void;
   setNode: (node?: NodeParamsType) => void;
   setRankResult: (result: RankResult) => void;
+  setTelemetryVendor: (vendor: TelemetryVendor) => void;
   setTraceId: (traceId?: string) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   startTour: ({ info, stop }) => void;
@@ -139,6 +144,7 @@ type ReduxStateProps = {
   showVirtualServices: boolean;
   showWaypoints: boolean;
   summaryData: SummaryData | null;
+  telemetryVendor: TelemetryVendor;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
 };
@@ -234,6 +240,40 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   private graphDataSource: GraphDataSource;
   private initTime: number;
 
+  constructor(props: GraphPageProps) {
+    super(props);
+    this.errorBoundaryRef = React.createRef();
+    this.initTime = Date.now();
+    const focusNodeId = getFocusSelector();
+    if (focusNodeId) {
+      this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
+      unsetFocusSelector();
+    }
+    this.graphDataSource = new GraphDataSource();
+
+    this.state = {
+      graphData: {
+        elements: { edges: [], nodes: [] },
+        elementsChanged: false,
+        fetchParams: this.graphDataSource.fetchParameters,
+        isLoading: false,
+        loaded: false,
+        timestamp: 0
+      },
+      isReady: false,
+      wizardsData: {
+        showWizard: false,
+        wizardType: '',
+        updateMode: false,
+        gateways: [],
+        k8sGateways: [],
+        peerAuthentications: [],
+        namespace: ''
+      },
+      showConfirmDeleteTrafficRouting: false
+    };
+  }
+
   static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
     const aggregate = props.aggregate;
     const aggregateOk = aggregate && aggregate !== UNKNOWN;
@@ -248,8 +288,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
-      // @ts-ignore
-      return;
+      return undefined;
     }
 
     let nodeType: NodeType;
@@ -304,40 +343,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     return false;
   }
 
-  constructor(props: GraphPageProps) {
-    super(props);
-    this.errorBoundaryRef = React.createRef();
-    this.initTime = Date.now();
-    const focusNodeId = getFocusSelector();
-    if (focusNodeId) {
-      this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
-      unsetFocusSelector();
-    }
-    this.graphDataSource = new GraphDataSource();
-
-    this.state = {
-      graphData: {
-        elements: { edges: [], nodes: [] },
-        elementsChanged: false,
-        fetchParams: this.graphDataSource.fetchParameters,
-        isLoading: false,
-        loaded: false,
-        timestamp: 0
-      },
-      isReady: false,
-      wizardsData: {
-        showWizard: false,
-        wizardType: '',
-        updateMode: false,
-        gateways: [],
-        k8sGateways: [],
-        peerAuthentications: [],
-        namespace: ''
-      },
-      showConfirmDeleteTrafficRouting: false
-    };
-  }
-
   componentDidMount(): void {
     // Connect to graph data source updates
     this.graphDataSource.on('loadStart', this.handleGraphDataSourceStart);
@@ -383,11 +388,18 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.props.setGraphType(urlGraphType);
     }
 
+    const urlTelemetryVendor = HistoryManager.getParam(URLParam.GRAPH_TELEMETRY_VENDOR) as TelemetryVendor;
+    const telemetryVendorSyncedFromUrl = !!urlTelemetryVendor && urlTelemetryVendor !== this.props.telemetryVendor;
+    if (telemetryVendorSyncedFromUrl) {
+      this.props.setTelemetryVendor(urlTelemetryVendor);
+    }
+
     // Unless we are waiting for Manual refresh, ensure we initialize the graph.
-    // When graphType was just synced from URL, skip the initial fetch here; componentDidUpdate will run
-    // once Redux updates and trigger a single fetch with the correct graphType.
+    // When graphType/telemetryVendor was just synced from URL, skip the initial fetch here; componentDidUpdate will run
+    // once Redux updates and trigger a single fetch with the correct options.
     if (
       !graphTypeSyncedFromUrl &&
+      !telemetryVendorSyncedFromUrl &&
       this.props.refreshInterval !== RefreshIntervalManual &&
       HistoryManager.getRefresh() !== RefreshIntervalManual
     ) {
@@ -437,6 +449,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         prev.boxByCluster !== curr.boxByCluster ||
         prev.boxByNamespace !== curr.boxByNamespace ||
         prev.graphType !== curr.graphType ||
+        prev.telemetryVendor !== curr.telemetryVendor ||
         (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
         (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
         prev.showIdleEdges !== curr.showIdleEdges ||
@@ -785,6 +798,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showSecurity: this.props.showSecurity,
       showWaypoints: this.props.showWaypoints,
       showVirtualServices: this.props.showVirtualServices,
+      telemetryVendor: this.props.telemetryVendor,
       trafficRates: this.props.trafficRates
     });
   };
@@ -834,6 +848,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   showWaypoints: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
+  telemetryVendor: telemetryVendorSelector(state),
   trace: state.tracingState?.selectedTrace,
   trafficRates: trafficRatesSelector(state)
 });
@@ -849,6 +864,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
+  setTelemetryVendor: bindActionCreators(GraphToolbarActions.setTelemetryVendor, dispatch),
   setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId(undefined, traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),

@@ -1,18 +1,21 @@
-import { AppenderString, DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../types/Common';
-import {
+import type { AppenderString, DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../types/Common';
+import type {
   DecoratedGraphElements,
-  EdgeLabelMode,
   GraphDefinition,
   GraphElements,
+  NodeParamsType,
+  GraphElementsQuery
+} from '../types/Graph';
+import {
+  EdgeLabelMode,
   GraphType,
   BoxByType,
-  NodeParamsType,
   NodeType,
   TrafficRate,
   DefaultTrafficRates,
-  GraphElementsQuery
+  TelemetryVendor
 } from '../types/Graph';
-import { Namespace } from '../types/Namespace';
+import type { Namespace } from '../types/Namespace';
 import { addError } from '../utils/AlertUtils';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import * as API from './Api';
@@ -76,6 +79,7 @@ export interface FetchParams {
   showSecurity: boolean;
   showVirtualServices: boolean;
   showWaypoints: boolean;
+  telemetryVendor?: TelemetryVendor;
   trafficRates: TrafficRate[];
 }
 
@@ -113,8 +117,6 @@ export class GraphDataSource {
     (graphData, duration) => decorateGraphData(graphData, duration)
   );
 
-  // Public methods
-
   constructor() {
     this.graphElements = EMPTY_GRAPH_DATA;
     this.graphDuration = 0;
@@ -143,6 +145,68 @@ export class GraphDataSource {
     this._isError = this._isLoading = false;
   }
 
+  // Getters and setters
+  public get graphData(): DecoratedGraphElements {
+    return this.decoratedData({ graphElements: this.graphElements, graphDuration: this.graphDuration });
+  }
+
+  public get graphDefinition(): GraphDefinition {
+    return {
+      duration: this.graphDuration,
+      elements: this.graphElements,
+      timestamp: this.graphTimestamp,
+      graphType: this.fetchParameters.graphType
+    };
+  }
+
+  public get errorMessage(): string | null {
+    return this._errorMessage;
+  }
+
+  public get fetchParameters(): FetchParams {
+    return this._fetchParams;
+  }
+
+  public get isError(): boolean {
+    return this._isError;
+  }
+
+  public get isLoading(): boolean {
+    return this._isLoading;
+  }
+
+  private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {
+    // queryTime defaults to server's 'now', leave unset
+    return {
+      boxByCluster: false, // not the main graph default, the helpers are for detail graphs
+      boxByNamespace: false, // not the main graph default, the helpers are for detail graphs
+      duration: duration,
+      edgeLabels: [],
+      graphType: GraphType.WORKLOAD,
+      includeHealth: true,
+      includeLabels: false,
+      injectServiceNodes: true,
+      namespaces: [{ name: namespace }],
+      node: {
+        app: '',
+        namespace: { name: namespace },
+        nodeType: NodeType.UNKNOWN,
+        service: '',
+        version: '',
+        workload: ''
+      },
+      showIdleEdges: false,
+      showIdleNodes: false,
+      showOperationNodes: false,
+      showSecurity: false,
+      showVirtualServices: true,
+      showWaypoints: true,
+      trafficRates: DefaultTrafficRates
+    };
+  }
+
+  // Public methods
+
   public destroy = (): void => {
     this.promiseRegistry.cancelAll();
   };
@@ -166,7 +230,8 @@ export class GraphDataSource {
       duration: `${fetchParams.duration}s`,
       graphType: fetchParams.graphType,
       includeIdleEdges: fetchParams.showIdleEdges,
-      injectServiceNodes: fetchParams.injectServiceNodes
+      injectServiceNodes: fetchParams.injectServiceNodes,
+      telemetryVendor: fetchParams.telemetryVendor ?? TelemetryVendor.ISTIO
     };
 
     const boxBy: string[] = [];
@@ -195,72 +260,77 @@ export class GraphDataSource {
       restParams.refreshInterval = String(fetchParams.refreshInterval);
     }
 
-    // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,serviceEntry,meshCheck,workloadEntry';
+    const isTracingGraph = restParams.telemetryVendor === TelemetryVendor.TRACING;
 
-    if (fetchParams.includeHealth) {
+    // Some appenders are expensive so only specify an appender if needed.
+    // Tracing vendor builds topology from spans; metric-based appenders do not apply.
+    let appenders: AppenderString = isTracingGraph ? '' : 'deadNode,serviceEntry,meshCheck,workloadEntry';
+
+    if (!isTracingGraph && fetchParams.includeHealth) {
       appenders += ',health';
     }
 
-    if (fetchParams.showVirtualServices) {
+    if (!isTracingGraph && fetchParams.showVirtualServices) {
       appenders += ',istio';
     }
 
-    if (fetchParams.showOperationNodes) {
+    if (!isTracingGraph && fetchParams.showOperationNodes) {
       appenders += ',aggregateNode';
     }
 
-    if (!fetchParams.node && fetchParams.showIdleNodes) {
+    if (!isTracingGraph && !fetchParams.node && fetchParams.showIdleNodes) {
       // note we only use the idleNode appender if this is NOT a drilled-in node graph and
       // the user specifically requests to see idle nodes.
       appenders += ',idleNode';
     }
 
-    if (serverConfig.ambientEnabled) {
+    if (!isTracingGraph && serverConfig.ambientEnabled) {
       appenders += ',ambient';
       restParams.waypoints = fetchParams.showWaypoints;
     }
 
-    if (fetchParams.includeLabels) {
+    if (!isTracingGraph && fetchParams.includeLabels) {
       appenders += ',labeler';
     }
 
-    if (fetchParams.showSecurity) {
+    if (!isTracingGraph && fetchParams.showSecurity) {
       appenders += ',securityPolicy';
     }
 
-    fetchParams.edgeLabels.forEach(edgeLabel => {
-      switch (edgeLabel) {
-        case EdgeLabelMode.RESPONSE_TIME_AVERAGE:
-          appenders += ',responseTime';
-          restParams.responseTime = 'avg';
-          break;
-        case EdgeLabelMode.RESPONSE_TIME_P50:
-          appenders += ',responseTime';
-          restParams.responseTime = '50';
-          break;
-        case EdgeLabelMode.RESPONSE_TIME_P95:
-          appenders += ',responseTime';
-          restParams.responseTime = '95';
-          break;
-        case EdgeLabelMode.RESPONSE_TIME_P99:
-          appenders += ',responseTime';
-          restParams.responseTime = '99';
-          break;
-        case EdgeLabelMode.THROUGHPUT_REQUEST:
-          appenders += ',throughput';
-          restParams.throughputType = 'request';
-          break;
-        case EdgeLabelMode.THROUGHPUT_RESPONSE:
-          appenders += ',throughput';
-          restParams.throughputType = 'response';
-          break;
-        case EdgeLabelMode.TRAFFIC_DISTRIBUTION:
-        case EdgeLabelMode.TRAFFIC_RATE:
-        default:
-          break;
-      }
-    });
+    if (!isTracingGraph) {
+      fetchParams.edgeLabels.forEach(edgeLabel => {
+        switch (edgeLabel) {
+          case EdgeLabelMode.RESPONSE_TIME_AVERAGE:
+            appenders += ',responseTime';
+            restParams.responseTime = 'avg';
+            break;
+          case EdgeLabelMode.RESPONSE_TIME_P50:
+            appenders += ',responseTime';
+            restParams.responseTime = '50';
+            break;
+          case EdgeLabelMode.RESPONSE_TIME_P95:
+            appenders += ',responseTime';
+            restParams.responseTime = '95';
+            break;
+          case EdgeLabelMode.RESPONSE_TIME_P99:
+            appenders += ',responseTime';
+            restParams.responseTime = '99';
+            break;
+          case EdgeLabelMode.THROUGHPUT_REQUEST:
+            appenders += ',throughput';
+            restParams.throughputType = 'request';
+            break;
+          case EdgeLabelMode.THROUGHPUT_RESPONSE:
+            appenders += ',throughput';
+            restParams.throughputType = 'response';
+            break;
+          case EdgeLabelMode.TRAFFIC_DISTRIBUTION:
+          case EdgeLabelMode.TRAFFIC_RATE:
+          default:
+            break;
+        }
+      });
+    }
 
     restParams.ambientTraffic = 'none';
     restParams.appenders = appenders;
@@ -268,47 +338,52 @@ export class GraphDataSource {
     restParams.rateHttp = 'none';
     restParams.rateTcp = 'none';
 
-    fetchParams.trafficRates.forEach(trafficRate => {
-      switch (trafficRate) {
-        case TrafficRate.AMBIENT_TOTAL:
-          restParams.ambientTraffic = 'total';
-          break;
-        case TrafficRate.AMBIENT_WAYPOINT:
-          restParams.ambientTraffic = 'waypoint';
-          break;
-        case TrafficRate.AMBIENT_ZTUNNEL:
-          restParams.ambientTraffic = 'ztunnel';
-          break;
-        case TrafficRate.GRPC_RECEIVED:
-          restParams.rateGrpc = 'received';
-          break;
-        case TrafficRate.GRPC_REQUEST:
-          restParams.rateGrpc = 'requests';
-          break;
-        case TrafficRate.GRPC_SENT:
-          restParams.rateGrpc = 'sent';
-          break;
-        case TrafficRate.GRPC_TOTAL:
-          restParams.rateGrpc = 'total';
-          break;
-        case TrafficRate.HTTP_REQUEST:
-          restParams.rateHttp = 'requests';
-          break;
-        case TrafficRate.TCP_RECEIVED:
-          restParams.rateTcp = 'received';
-          break;
-        case TrafficRate.TCP_SENT:
-          restParams.rateTcp = 'sent';
-          break;
-        case TrafficRate.TCP_TOTAL:
-          restParams.rateTcp = 'total';
-          break;
-        default:
-          break;
+    if (!isTracingGraph) {
+      fetchParams.trafficRates.forEach(trafficRate => {
+        switch (trafficRate) {
+          case TrafficRate.AMBIENT_TOTAL:
+            restParams.ambientTraffic = 'total';
+            break;
+          case TrafficRate.AMBIENT_WAYPOINT:
+            restParams.ambientTraffic = 'waypoint';
+            break;
+          case TrafficRate.AMBIENT_ZTUNNEL:
+            restParams.ambientTraffic = 'ztunnel';
+            break;
+          case TrafficRate.GRPC_RECEIVED:
+            restParams.rateGrpc = 'received';
+            break;
+          case TrafficRate.GRPC_REQUEST:
+            restParams.rateGrpc = 'requests';
+            break;
+          case TrafficRate.GRPC_SENT:
+            restParams.rateGrpc = 'sent';
+            break;
+          case TrafficRate.GRPC_TOTAL:
+            restParams.rateGrpc = 'total';
+            break;
+          case TrafficRate.HTTP_REQUEST:
+            restParams.rateHttp = 'requests';
+            break;
+          case TrafficRate.TCP_RECEIVED:
+            restParams.rateTcp = 'received';
+            break;
+          case TrafficRate.TCP_SENT:
+            restParams.rateTcp = 'sent';
+            break;
+          case TrafficRate.TCP_TOTAL:
+            restParams.rateTcp = 'total';
+            break;
+          default:
+            break;
+        }
+      });
+      if (!serverConfig.ambientEnabled) {
+        restParams.ambientTraffic = 'none';
       }
-    });
-    if (!serverConfig.ambientEnabled) {
-      restParams.ambientTraffic = 'none';
+    } else {
+      // Trace-based graphs expose call counts as HTTP totals.
+      restParams.rateHttp = 'requests';
     }
 
     let cluster: string | undefined;
@@ -325,6 +400,7 @@ export class GraphDataSource {
         this.fetchParameters.namespaces.map(ns => ns.name).join() ||
       previousFetchParams.node !== this.fetchParameters.node ||
       previousFetchParams.graphType !== this.fetchParameters.graphType ||
+      previousFetchParams.telemetryVendor !== this.fetchParameters.telemetryVendor ||
       previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
       previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes ||
       previousFetchParams.showOperationNodes !== this.fetchParameters.showOperationNodes ||
@@ -517,36 +593,6 @@ export class GraphDataSource {
 
   // Private methods
 
-  private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {
-    // queryTime defaults to server's 'now', leave unset
-    return {
-      boxByCluster: false, // not the main graph default, the helpers are for detail graphs
-      boxByNamespace: false, // not the main graph default, the helpers are for detail graphs
-      duration: duration,
-      edgeLabels: [],
-      graphType: GraphType.WORKLOAD,
-      includeHealth: true,
-      includeLabels: false,
-      injectServiceNodes: true,
-      namespaces: [{ name: namespace }],
-      node: {
-        app: '',
-        namespace: { name: namespace },
-        nodeType: NodeType.UNKNOWN,
-        service: '',
-        version: '',
-        workload: ''
-      },
-      showIdleEdges: false,
-      showIdleNodes: false,
-      showOperationNodes: false,
-      showSecurity: false,
-      showVirtualServices: true,
-      showWaypoints: true,
-      trafficRates: DefaultTrafficRates
-    };
-  }
-
   private emit: EmitEvents = (eventName: string, ...args: unknown[]) => {
     this.eventEmitter.emit(eventName, ...args);
   };
@@ -627,34 +673,4 @@ export class GraphDataSource {
         }
       );
   };
-
-  // Getters and setters
-  public get graphData(): DecoratedGraphElements {
-    return this.decoratedData({ graphElements: this.graphElements, graphDuration: this.graphDuration });
-  }
-
-  public get graphDefinition(): GraphDefinition {
-    return {
-      duration: this.graphDuration,
-      elements: this.graphElements,
-      timestamp: this.graphTimestamp,
-      graphType: this.fetchParameters.graphType
-    };
-  }
-
-  public get errorMessage(): string | null {
-    return this._errorMessage;
-  }
-
-  public get fetchParameters(): FetchParams {
-    return this._fetchParams;
-  }
-
-  public get isError(): boolean {
-    return this._isError;
-  }
-
-  public get isLoading(): boolean {
-    return this._isLoading;
-  }
 }

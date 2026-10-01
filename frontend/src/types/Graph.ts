@@ -1,7 +1,7 @@
-import { Namespace } from './Namespace';
-import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
-import { Health } from './Health';
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import type { Namespace } from './Namespace';
+import type { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
+import type { Health } from './Health';
+import type { Controller, GraphElement } from '@patternfly/react-topology';
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
 
@@ -214,6 +214,12 @@ export enum GraphType {
   SERVICE = 'service',
   VERSIONED_APP = 'versionedApp',
   WORKLOAD = 'workload'
+}
+
+/** Source used to build the traffic graph topology. */
+export enum TelemetryVendor {
+  ISTIO = 'istio',
+  TRACING = 'tracing'
 }
 
 export enum BoxByType {
@@ -478,6 +484,7 @@ export interface GraphElementsQuery {
   rateTcp?: string;
   refreshInterval?: string;
   responseTime?: string;
+  telemetryVendor?: TelemetryVendor;
   throughputType?: string;
   waypoints?: boolean;
 }

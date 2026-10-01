@@ -5,16 +5,20 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
-import { GraphType } from 'types/Graph';
+import { GraphType, TelemetryVendor } from 'types/Graph';
 import { capitalize, findKey, mapValues, startCase } from 'lodash-es';
 import { TimeDurationComponent } from '../../../components/Time/TimeDurationComponent';
 import { GraphTraffic } from './GraphTraffic';
+import { t } from 'utils/I18nUtils';
 
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
   graphType: GraphType;
   isNodeGraph: boolean;
   onGraphTypeChange: (graphType: GraphType) => void;
+  onTelemetryVendorChange: (vendor: TelemetryVendor) => void;
+  telemetryVendor: TelemetryVendor;
+  tracingEnabled: boolean;
 };
 
 const leftSpacerStyle = kialiStyle({
@@ -40,6 +44,11 @@ const rightToolbarStyle = kialiStyle({
 const GRAPH_TYPES = mapValues(GraphType, val => `${capitalize(startCase(val))} graph`);
 
 export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (props: GraphSecondaryMastheadProps) => {
+  const telemetryVendors = {
+    ISTIO: t('Metrics map'),
+    TRACING: t('Traces map')
+  };
+
   const setGraphType = (type: string): void => {
     const graphType: GraphType = GraphType[type] as GraphType;
     if (props.graphType !== graphType) {
@@ -47,7 +56,17 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
     }
   };
 
+  const setTelemetryVendor = (vendorKey: string): void => {
+    const vendor: TelemetryVendor = TelemetryVendor[vendorKey] as TelemetryVendor;
+    if (props.telemetryVendor !== vendor) {
+      props.onTelemetryVendorChange(vendor);
+    }
+  };
+
   const graphTypeKey = findKey(GraphType, val => val === props.graphType)!;
+  const telemetryVendorKey = findKey(TelemetryVendor, val => val === props.telemetryVendor)!;
+
+  const vendorOptions = props.tracingEnabled ? telemetryVendors : { ISTIO: telemetryVendors.ISTIO };
 
   return (
     <SecondaryMasthead>
@@ -61,6 +80,19 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
             <GraphTraffic disabled={props.disabled} />
           </span>
         </TourStop>
+
+        <span className={vrStyle} />
+
+        <span className={leftSpacerStyle}>
+          <ToolbarDropdown
+            id={'graph_telemetry_vendor_dropdown'}
+            disabled={props.disabled || props.isNodeGraph || !props.tracingEnabled}
+            handleSelect={setTelemetryVendor}
+            value={telemetryVendorKey}
+            label={telemetryVendors[telemetryVendorKey]}
+            options={vendorOptions}
+          />
+        </span>
 
         <span className={vrStyle} />
 

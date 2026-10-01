@@ -17,7 +17,8 @@ import {
   graphTypeSelector,
   showIdleNodesSelector,
   replayActiveSelector,
-  trafficRatesSelector
+  trafficRatesSelector,
+  telemetryVendorSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphSettings } from './GraphSettings';
@@ -27,7 +28,8 @@ import type {
   EdgeLabelMode,
   SummaryData,
   TrafficRate,
-  RankMode
+  RankMode,
+  TelemetryVendor
 } from '../../../types/Graph';
 import { router, HistoryManager, URLParam, location } from '../../../app/History';
 import type { Namespace } from '../../../types/Namespace';
@@ -58,6 +60,8 @@ type ReduxStateProps = {
   replayActive: boolean;
   showIdleNodes: boolean;
   summaryData: SummaryData | null;
+  telemetryVendor: TelemetryVendor;
+  tracingEnabled: boolean;
   trafficRates: TrafficRate[];
 };
 
@@ -68,6 +72,7 @@ type ReduxDispatchProps = {
   setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
   setRankBy: (rankLabels: RankMode[]) => void;
+  setTelemetryVendor: (vendor: TelemetryVendor) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   toggleReplayActive: () => void;
 };
@@ -135,6 +140,15 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     }
 
+    const urlTelemetryVendor = HistoryManager.getParam(URLParam.GRAPH_TELEMETRY_VENDOR, urlParams) as TelemetryVendor;
+    if (!!urlTelemetryVendor) {
+      if (urlTelemetryVendor !== props.telemetryVendor) {
+        props.setTelemetryVendor(urlTelemetryVendor);
+      }
+    } else {
+      HistoryManager.setParam(URLParam.GRAPH_TELEMETRY_VENDOR, String(this.props.telemetryVendor));
+    }
+
     const urlNamespaces = HistoryManager.getParam(URLParam.NAMESPACES, urlParams);
     if (!!urlNamespaces) {
       if (urlNamespaces !== namespacesToString(props.activeNamespaces)) {
@@ -190,6 +204,10 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     if (prevProps.graphType !== this.props.graphType) {
       HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     }
+
+    if (prevProps.telemetryVendor !== this.props.telemetryVendor) {
+      HistoryManager.setParam(URLParam.GRAPH_TELEMETRY_VENDOR, String(this.props.telemetryVendor));
+    }
   }
 
   componentWillUnmount(): void {
@@ -211,6 +229,9 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           graphType={this.props.graphType}
           isNodeGraph={isNodeGraph}
           onGraphTypeChange={this.props.setGraphType}
+          onTelemetryVendorChange={this.props.setTelemetryVendor}
+          telemetryVendor={this.props.telemetryVendor}
+          tracingEnabled={this.props.tracingEnabled}
         />
         <Toolbar style={{ paddingTop: '1rem', width: '100%' }}>
           <ToolbarGroup aria-label={t('graph settings')} style={{ margin: 0, alignItems: 'flex-start' }}>
@@ -296,6 +317,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   replayActive: replayActiveSelector(state),
   showIdleNodes: showIdleNodesSelector(state),
   summaryData: state.graph.summaryData,
+  telemetryVendor: telemetryVendorSelector(state),
+  tracingEnabled: !!state.tracingState.info?.enabled,
   trafficRates: trafficRatesSelector(state)
 });
 
@@ -307,6 +330,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     setIdleNodes: bindActionCreators(GraphToolbarActions.setIdleNodes, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
+    setTelemetryVendor: bindActionCreators(GraphToolbarActions.setTelemetryVendor, dispatch),
     setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
     toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
   };

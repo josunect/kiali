@@ -24,6 +24,7 @@ import (
 const (
 	VendorCommon           string = "common"
 	VendorIstio            string = "istio"
+	VendorTracing          string = "tracing"
 	defaultConfigVendor    string = VendorCommon
 	defaultTelemetryVendor string = VendorIstio
 )
@@ -288,7 +289,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer, conf *config
 	// Note: refreshInterval <= 0 means disable caching (bypass)
 	if telemetryVendor == "" {
 		telemetryVendor = defaultTelemetryVendor
-	} else if telemetryVendor != VendorIstio {
+	} else if telemetryVendor != VendorIstio && telemetryVendor != VendorTracing {
 		BadRequest(fmt.Sprintf("Invalid telemetryVendor [%s]", telemetryVendor))
 	}
 

@@ -1,6 +1,7 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { GraphType, EdgeLabelMode, TrafficRate, RankMode } from '../types/Graph';
+import type { ActionType } from 'typesafe-actions';
+import { createAction, createStandardAction } from 'typesafe-actions';
+import type { GraphType, EdgeLabelMode, TrafficRate, RankMode, TelemetryVendor } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 
 export const GraphToolbarActions = {
@@ -11,6 +12,7 @@ export const GraphToolbarActions = {
   setHideValue: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_HIDE_VALUE)<string>(),
   setIdleNodes: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_IDLE_NODES)<boolean>(),
   setRankBy: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_RANK_BY)<RankMode[]>(),
+  setTelemetryVendor: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_TELEMETRY_VENDOR)<TelemetryVendor>(),
   setTrafficRates: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_TRAFFIC_RATES)<TrafficRate[]>(),
   // Toggle actions
   toggleBoxByCluster: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_BOX_BY_CLUSTER),

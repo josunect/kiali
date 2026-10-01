@@ -24,7 +24,7 @@ package handlers
 //   boxBy:           If supported by vendor, visually box by a specified node attribute (default: none)
 //   namespaces:      Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:       Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
-//   TelemetryVendor: default: istio
+//   TelemetryVendor: default: istio (istio | tracing)
 //
 //  Note: some handlers may ignore some query parameters.
 //  Note: vendors may support additional, vendor-specific query parameters.

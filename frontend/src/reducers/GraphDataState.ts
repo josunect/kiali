@@ -1,8 +1,8 @@
 import { getType } from 'typesafe-actions';
 import { GraphActions } from '../actions/GraphActions';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { GraphState } from '../store/Store';
-import { EdgeMode, GraphLayout, GraphType, TrafficRate } from '../types/Graph';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import type { GraphState } from '../store/Store';
+import { EdgeMode, GraphLayout, GraphType, TelemetryVendor, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { updateState } from '../utils/Reducer';
 
@@ -35,6 +35,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showTrafficAnimation: false,
     showVirtualServices: true,
     showWaypoints: false,
+    telemetryVendor: TelemetryVendor.ISTIO,
     trafficRates: [
       TrafficRate.AMBIENT_GROUP,
       TrafficRate.AMBIENT_TOTAL,
@@ -98,6 +99,12 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           graphType: action.payload
+        })
+      });
+    case getType(GraphToolbarActions.setTelemetryVendor):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          telemetryVendor: action.payload
         })
       });
     case getType(GraphToolbarActions.setHideValue):

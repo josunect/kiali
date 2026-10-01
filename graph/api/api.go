@@ -12,6 +12,7 @@ import (
 	config_common "github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/graph/telemetry/istio"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
+	"github.com/kiali/kiali/graph/telemetry/tracing"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
@@ -29,6 +30,8 @@ func GraphOptionsMatch(a, b graph.Options) bool {
 	switch a.TelemetryVendor {
 	case graph.VendorIstio:
 		return istio.GraphOptionsMatch(a.TelemetryOptions, b.TelemetryOptions)
+	case graph.VendorTracing:
+		return tracing.GraphOptionsMatch(a.TelemetryOptions, b.TelemetryOptions)
 	default:
 		// skip
 	}
@@ -63,6 +66,8 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometh
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
 		code, graphConfig, trafficMap = graphNamespacesIstio(ctx, business, prom, o)
+	case graph.VendorTracing:
+		code, graphConfig, trafficMap = graphNamespacesTracing(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -83,6 +88,18 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom pr
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewGlobalIstioInfo())
 
 	trafficMap = istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
+
+	return code, graphConfig, trafficMap
+}
+
+// graphNamespacesTracing builds a namespace graph from distributed traces.
+func graphNamespacesTracing(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}, trafficMap graph.TrafficMap) {
+	clusters := business.Mesh.Clusters()
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, tracing.NewGlobalTracingInfo())
+
+	trafficMap = tracing.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 
 	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
@@ -112,6 +129,8 @@ func GraphNode(ctx context.Context, business *business.Layer, prom prometheus.Cl
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
 		code, graphConfig = graphNodeIstio(ctx, business, prom, o)
+	case graph.VendorTracing:
+		code, graphConfig = graphNodeTracing(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -134,6 +153,18 @@ func graphNodeIstio(ctx context.Context, business *business.Layer, prom promethe
 	globalInfo.PromClient = prom
 
 	trafficMap, _ := istio.BuildNodeTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
+
+	return code, graphConfig
+}
+
+func graphNodeTracing(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
+	clusters := business.Mesh.Clusters()
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, tracing.NewGlobalTracingInfo())
+	globalInfo.Business = business
+	globalInfo.PromClient = prom
+
+	trafficMap, _ := tracing.BuildNodeTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig
