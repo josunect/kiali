@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  # Pairing requires both sides of each edge in the same Collector instance.
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+      - args: [--config=/config/collector.yaml]
+        image: otel/opentelemetry-collector-contrib:0.164.0
+        name: otel-collector
+        ports:
+        - containerPort: 4317
+        - containerPort: 4318
+        - containerPort: 8889
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+      volumes:
+      - configMap:
+          name: otel-collector
+        name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: istio-system
+spec:
+  ports:
+  - name: grpc-4317
+    port: 4317
+    targetPort: 4317
+  - name: http-4318
+    port: 4318
+    targetPort: 4318
+  - name: http-8889
+    port: 8889
+    targetPort: 8889
+  selector:
+    app: otel-collector

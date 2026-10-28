@@ -1,0 +1,29 @@
+groups:
+- name: otel-kiali-extension
+  rules:
+  # Preserve the real server HTTP status; do not infer HTTP codes from span status.
+  # Each metric counts one paired CLIENT/SERVER edge, not two spans.
+  # POC_MESH_CLUSTER is substituted by observability.sh (default: cluster-default).
+  - expr: |
+      sum by (source_name, dest_name, source_namespace, dest_namespace, status_code) (
+        label_replace(
+          label_replace(
+            label_replace(
+              label_replace(
+                label_replace(
+                  traces_service_graph_request_total{client_service_namespace=~".+",server_service_namespace=~".+",server_http_response_status_code=~"[1-5][0-9][0-9]"},
+                  "source_name", "$1", "client", "(.+)"),
+                "dest_name", "$1", "server", "(.+)"),
+              "source_namespace", "$1", "client_service_namespace", "(.+)"),
+            "dest_namespace", "$1", "server_service_namespace", "(.+)"),
+          "status_code", "$1", "server_http_response_status_code", "(.+)")
+      )
+    labels:
+      dest_cluster: ${POC_MESH_CLUSTER}
+      extension: otel-traces
+      protocol: http
+      reporter: combined
+      reporter_id: otel-collector
+      source_cluster: ${POC_MESH_CLUSTER}
+      source_is_root: 'false'
+    record: kiali_ext_requests_total

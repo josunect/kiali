@@ -1,0 +1,4 @@
+# Scrape job appended to the Istio Prometheus addon configmap (prometheus.yml).
+job_name: otel-service-graph
+static_configs:
+- targets: ['otel-collector.istio-system.svc.cluster.local:8889']

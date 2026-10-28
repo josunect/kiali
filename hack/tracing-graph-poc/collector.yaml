@@ -1,0 +1,47 @@
+connectors:
+  service_graph:
+    dimensions: [service.namespace, http.response.status_code]
+    latency_histogram_buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 1s]
+    metrics_flush_interval: 5s
+    store:
+      max_items: 10000
+      ttl: 10s
+exporters:
+  otlp_grpc/jaeger:
+    endpoint: jaeger-collector.istio-system.svc.cluster.local:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 192
+    spike_limit_mib: 48
+  transform/identity:
+    error_mode: propagate
+    trace_statements:
+    - context: span
+      statements:
+      # Envoy names services as app.namespace (K8s namespaces have no dots).
+      - set(resource.attributes["service.namespace"], Split(resource.attributes["service.name"], ".")[1]) where IsMatch(resource.attributes["service.name"], "^[^.]+[.][^.]+$")
+      - set(resource.attributes["service.name"], Split(resource.attributes["service.name"], ".")[0]) where IsMatch(resource.attributes["service.name"], "^[^.]+[.][^.]+$")
+      - set(span.attributes["service.namespace"], resource.attributes["service.namespace"])
+      # Older Envoy HTTP convention → current semantic convention for service_graph.
+      - set(span.attributes["http.response.status_code"], span.attributes["http.status_code"]) where span.attributes["http.response.status_code"] == nil and span.attributes["http.status_code"] != nil
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+service:
+  pipelines:
+    metrics:
+      exporters: [prometheus]
+      receivers: [service_graph]
+    traces:
+      exporters: [service_graph, otlp_grpc/jaeger]
+      processors: [memory_limiter, transform/identity]
+      receivers: [otlp]

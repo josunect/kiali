@@ -1,0 +1,30 @@
+auth:
+  strategy: anonymous
+deployment:
+  image_pull_policy: IfNotPresent
+  image_version: v2.34.0
+  ingress:
+    enabled: false
+  network_policy:
+    enabled: false
+  version_label: v2.34.0
+extensions:
+- enabled: true
+  name: otel-traces
+external_services:
+  grafana:
+    enabled: false
+  istio:
+    istio_api_enabled: false
+  prometheus:
+    url: http://prometheus.istio-system:9090
+  tracing:
+    enabled: true
+    external_url: http://localhost:17686
+    internal_url: http://tracing.istio-system:80
+    provider: jaeger
+    use_grpc: false
+kubernetes_config:
+  cluster_name: cluster-default
+server:
+  web_root: /kiali

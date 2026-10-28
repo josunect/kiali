@@ -1,0 +1,11 @@
+# Overlay for install-istio-via-sail.sh -pf.
+# Point the otel-tracing extension provider at this PoC's Collector (service_graph)
+# instead of the Jaeger collector installed by the jaeger addon.
+spec:
+  values:
+    meshConfig:
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: otel-collector.istio-system.svc.cluster.local
