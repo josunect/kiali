@@ -8,6 +8,10 @@ on:
     branches:
     - master
     - v*.*
+    paths-ignore:
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
