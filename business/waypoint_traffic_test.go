@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -148,6 +149,53 @@ func TestListWaypointCapturedServicesEffectiveSplit(t *testing.T) {
 				require.NoError(t, json.Unmarshal(data, &decoded))
 				assert.Equal(t, float64(*ref.RoleWeight), decoded["roleWeight"])
 			}
+		})
+	}
+}
+
+func TestListWaypointWorkloadsWorkloadNamespacePrimaryEnrollment(t *testing.T) {
+	for name, gatewayNamespace := range map[string]string{
+		"same namespace":  "bookinfo",
+		"cross namespace": "infra",
+	} {
+		t.Run(name, func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "cluster-default"
+			conf.ExternalServices.Istio.IstioAPIEnabled = false
+			config.Set(conf)
+
+			ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					config.WaypointUseLabel:           "bwaypoint",
+				},
+				Name: "bookinfo",
+			}}
+			if gatewayNamespace != ns.Name {
+				ns.Labels[config.WaypointUseNamespaceLabel] = gatewayNamespace
+			}
+			deployment := FakeDeploymentWithPort("ratings", 9080)
+			layer := NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(ns, deployment)).Build()
+			waypoints := models.Workloads{&models.Workload{
+				WorkloadListItem: models.WorkloadListItem{
+					Cluster: conf.KubernetesConfig.ClusterName,
+					Labels: map[string]string{
+						config.WaypointFor:   config.WaypointForWorkload,
+						config.WaypointLabel: config.WaypointLabelValue,
+					},
+					Name:      "bwaypoint",
+					Namespace: gatewayNamespace,
+				},
+			}}
+
+			workloads, services := layer.Workload.listWaypointWorkloads(context.Background(), conf.KubernetesConfig.ClusterName, gatewayNamespace, "bwaypoint", false, waypoints)
+			require.Len(t, workloads, 1)
+			assert.Equal(t, deployment.Name, workloads[0].Name)
+			assert.Equal(t, ns.Name, workloads[0].Namespace)
+			assert.Equal(t, "namespace", workloads[0].LabelType)
+			assert.Equal(t, models.WaypointRolePrimary, workloads[0].WaypointRole)
+			assert.Nil(t, workloads[0].RoleWeight)
+			assert.Empty(t, services)
 		})
 	}
 }

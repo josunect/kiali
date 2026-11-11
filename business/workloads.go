@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -2994,8 +2995,8 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 	labeledNamespaces := sliceutil.Filter(nslist, func(ns core_v1.Namespace) bool {
 		return ns.Name == wpNamespace || ns.Labels[useNamespaceLabel] == wpNamespace
 	})
-	// Canary splits are service-scoped; workload-for waypoint proxies only enroll via pod labels.
-	skipNamespaceWorkloadEnrollment := waypointFor == config.WaypointForWorkload
+	// Canary splits are service-scoped; namespace primary bindings still capture direct workload traffic.
+	skipNamespaceWorkloadEnrollment := waypointFor == config.WaypointForWorkload && role == models.WaypointRoleCanary
 	if !skipNamespaceWorkloadEnrollment && len(labeledNamespaces) > 0 {
 		labeledNamespaceNames := sliceutil.Map(labeledNamespaces, func(ns core_v1.Namespace) string {
 			return ns.Name
