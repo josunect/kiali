@@ -162,16 +162,6 @@ func computeGatewayWaypointTrafficSplitConfigs(ctx context.Context, in *Workload
 	if len(configs) > 0 {
 		return configs
 	}
-	if nsModel, nsFound := in.cache.GetNamespace(cluster, userClient.GetCacheKey(), gatewayNamespace); nsFound {
-		split := models.GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName, nsModel.Labels, nsModel.Annotations)
-		if split != nil && split.Canary != nil {
-			return []models.GatewayWaypointTrafficSplitConfig{{
-				ConfigLevel: "namespace",
-				Namespace:   gatewayNamespace,
-				Split:       split,
-			}}
-		}
-	}
 	return nil
 }
 
