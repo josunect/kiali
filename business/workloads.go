@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package business
 
 import (
@@ -2882,7 +2884,7 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 	}
 
 	if !all {
-		split := waypointTrafficSplitForWorkload(ctx, in, workload)
+		split := waypointTrafficSplitForCapturedWorkload(in, workload)
 		workloadsList = appendCanaryWaypointRef(workloadsList, split, waypoints)
 	}
 

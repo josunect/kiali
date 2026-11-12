@@ -86,6 +86,12 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 	if !found {
 		return nil
 	}
+	return waypointTrafficSplitForCapturedWorkload(in, workload)
+}
+
+// Callers that already established capture can resolve the split without repeating
+// the Service lookup. Other callers must use waypointTrafficSplitForWorkload.
+func waypointTrafficSplitForCapturedWorkload(in *WorkloadService, workload models.Workload) *models.WaypointTrafficSplit {
 	cluster := workload.Cluster
 	nsName := workload.Namespace
 
