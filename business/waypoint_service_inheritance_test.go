@@ -70,7 +70,9 @@ func TestServicePartialCanaryOverrides(t *testing.T) {
 					Namespace: ns.Name,
 				},
 			}
-			assert.Equal(t, split, waypointTrafficSplitForWorkload(ctx, &layer.Workload, workload), "attached Services retain partial overrides on workload details")
+			workloadSplit, serviceName := waypointTrafficSplitForWorkload(ctx, &layer.Workload, workload)
+			assert.Equal(t, split, workloadSplit, "attached Services retain partial overrides on workload details")
+			assert.Equal(t, svc.Name, serviceName)
 			primaryConfigs := layer.Svc.GatewayTrafficSplitConfigsFromEnrolledServices(ctx, "primary", ns.Name, conf.KubernetesConfig.ClusterName)
 			if tc.wantCanary != "" {
 				require.Len(t, primaryConfigs, 1)

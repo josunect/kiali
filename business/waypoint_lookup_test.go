@@ -123,7 +123,9 @@ func TestWorkloadWaypointLookupPreservesOptOut(t *testing.T) {
 				Namespace: ns.Name,
 			}}}
 			assert.Empty(t, layer.Workload.getWaypointsForWorkload(ctx, workload, false, waypoints))
-			assert.Nil(t, waypointTrafficSplitForWorkload(ctx, &layer.Workload, workload))
+			split, serviceName := waypointTrafficSplitForWorkload(ctx, &layer.Workload, workload)
+			assert.Nil(t, split)
+			assert.Empty(t, serviceName)
 		})
 	}
 }
